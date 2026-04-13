@@ -22,16 +22,12 @@ const config: Config = {
           800: "#982528",
           900: "#7E2426",
         },
-        ink: "#171717",
-        surface: "#FFF8F6",
-        muted: "#6B7280",
+        ink: "#17181B",
+        surface: "#F4F4F6",
+        muted: "#6D7481",
       },
       boxShadow: {
-        panel: "0 10px 30px rgba(242, 77, 79, 0.08)",
-      },
-      backgroundImage: {
-        "shell-gradient":
-          "radial-gradient(circle at top right, rgba(242, 77, 79, 0.12), transparent 32%), radial-gradient(circle at left top, rgba(255, 210, 210, 0.55), transparent 22%)",
+        panel: "0 8px 24px rgba(20, 20, 24, 0.05)",
       },
     },
   },

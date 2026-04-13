@@ -1,4 +1,7 @@
-import type { ScoreContribution, ScoreBreakdown } from "../contracts/agent-output.ts";
+import type {
+  ScoreContribution,
+  ScoreBreakdown,
+} from "../contracts/agent-output.ts";
 
 export function createEmptyBreakdown(): ScoreBreakdown {
   const emptySection = (): ScoreContribution[] => [];
@@ -17,4 +20,3 @@ export function createEmptyBreakdown(): ScoreBreakdown {
     },
   };
 }
-

@@ -10,12 +10,20 @@ import { agentFixtures } from "../fixtures/agent-fixtures.ts";
 test("aggregates portfolio pressure at KAM level", () => {
   const restaurants = agentFixtures.restaurants
     .filter((restaurant) => restaurant.kamId === "kam-1")
-    .map((restaurant) => aggregateRestaurantAssessment(restaurant, defaultAgentConfig, {
-      kamPortfolioGmv7d: 149000,
-      concentrationShare: restaurant.restaurantId === "rest-critical-1" ? 0.84 : 0.16,
-    }).assessment);
+    .map(
+      (restaurant) =>
+        aggregateRestaurantAssessment(restaurant, defaultAgentConfig, {
+          kamPortfolioGmv7d: 149000,
+          concentrationShare:
+            restaurant.restaurantId === "rest-critical-1" ? 0.84 : 0.16,
+        }).assessment,
+    );
 
-  const kam = aggregateKamAssessment(agentFixtures.kams?.[0], restaurants, defaultAgentConfig);
+  const kam = aggregateKamAssessment(
+    agentFixtures.kams?.[0],
+    restaurants,
+    defaultAgentConfig,
+  );
 
   assert.equal(kam.portfolioStatus, "critical");
   assert.ok(kam.criticalRestaurants.length > 0);
@@ -27,11 +35,19 @@ test("builds an alert feed for restaurants and KAMs", () => {
     ...aggregateRestaurantAssessment(restaurant, defaultAgentConfig, {
       kamPortfolioGmv7d: restaurant.kamId === "kam-1" ? 149000 : 118000,
       concentrationShare:
-        restaurant.restaurantId === "rest-critical-1" ? 0.84 : restaurant.restaurantId === "rest-fallback-1" ? 0.64 : 0.36,
+        restaurant.restaurantId === "rest-critical-1"
+          ? 0.84
+          : restaurant.restaurantId === "rest-fallback-1"
+            ? 0.64
+            : 0.36,
     }).assessment,
     restaurantName: restaurant.restaurantName,
   }));
-  const kamAssessment = aggregateKamAssessment(agentFixtures.kams?.[0], restaurantAssessments.filter((item) => item.kamId === "kam-1"), defaultAgentConfig);
+  const kamAssessment = aggregateKamAssessment(
+    agentFixtures.kams?.[0],
+    restaurantAssessments.filter((item) => item.kamId === "kam-1"),
+    defaultAgentConfig,
+  );
   const alerts = buildAlertFeed({
     restaurants: restaurantAssessments,
     kams: [kamAssessment],
@@ -43,4 +59,3 @@ test("builds an alert feed for restaurants and KAMs", () => {
   assert.ok(alerts.some((alert) => alert.entityType === "restaurant"));
   assert.ok(alerts.some((alert) => alert.entityType === "kam"));
 });
-

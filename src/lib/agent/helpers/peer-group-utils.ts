@@ -1,4 +1,8 @@
-import type { PeerBenchmarkContext, PeerGroupCandidate, PeerGroupType } from "../contracts/agent-input.ts";
+import type {
+  PeerBenchmarkContext,
+  PeerGroupCandidate,
+  PeerGroupType,
+} from "../contracts/agent-input.ts";
 import type { AgentConfig } from "../config/index.ts";
 
 const ORDER: PeerGroupType[] = ["city_vertical", "vertical", "city", "global"];
@@ -25,7 +29,8 @@ export function selectPeerGroup(
     (left, right) => ORDER.indexOf(left.type) - ORDER.indexOf(right.type),
   );
   const reliable = sorted.find(
-    (candidate) => candidate.sampleSize >= config.confidence.peerGroupRules.reliableMinimum,
+    (candidate) =>
+      candidate.sampleSize >= config.confidence.peerGroupRules.reliableMinimum,
   );
 
   if (reliable) {
@@ -37,7 +42,8 @@ export function selectPeerGroup(
   }
 
   const cautious = sorted.find(
-    (candidate) => candidate.sampleSize >= config.confidence.peerGroupRules.cautionMinimum,
+    (candidate) =>
+      candidate.sampleSize >= config.confidence.peerGroupRules.cautionMinimum,
   );
 
   if (cautious) {
@@ -55,4 +61,3 @@ export function selectPeerGroup(
     caution: true,
   };
 }
-

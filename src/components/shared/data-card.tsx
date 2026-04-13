@@ -14,9 +14,12 @@ type DataCardProps = {
 };
 
 const accentClasses: Record<NonNullable<DataCardProps["accent"]>, string> = {
-  brand: "border-brand-100 bg-gradient-to-br from-white via-white to-brand-50/80",
-  warning: "border-amber-200 bg-gradient-to-br from-white via-white to-amber-50/80",
-  stable: "border-emerald-200 bg-gradient-to-br from-white via-white to-emerald-50/80",
+  brand:
+    "border-brand-100 bg-gradient-to-br from-white via-white to-brand-50/80",
+  warning:
+    "border-amber-200 bg-gradient-to-br from-white via-white to-amber-50/80",
+  stable:
+    "border-emerald-200 bg-gradient-to-br from-white via-white to-emerald-50/80",
   neutral: "border-slate-200 bg-white",
 };
 
@@ -55,10 +58,14 @@ export function DataCard({
       </div>
 
       {value ? (
-        <p className="mt-5 text-3xl font-semibold tracking-[-0.04em] text-ink">{value}</p>
+        <p className="mt-5 text-3xl font-semibold tracking-[-0.04em] text-ink">
+          {value}
+        </p>
       ) : null}
 
-      {description ? <p className="mt-3 text-sm leading-6 text-slate-600">{description}</p> : null}
+      {description ? (
+        <p className="mt-3 text-sm leading-6 text-slate-600">{description}</p>
+      ) : null}
       {footer ? <div className="mt-5">{footer}</div> : null}
     </article>
   );

@@ -1,156 +1,453 @@
+import type {
+  AlertFeedItem,
+  KamAssessment,
+  RecommendationCode,
+  RestaurantAssessment,
+  RestaurantMiniAssessment,
+  SignalType,
+} from "@/lib/agent/contracts/agent-output";
+import type { Case2OutputBundle } from "@/lib/data/case2/output";
 import type { ScenarioId } from "@/types/domain";
 
-import type { DemoSnapshot } from "./contracts";
-import { baselineSnapshot } from "./baseline";
-import { getScenarioOption, scenarioOptions } from "./options";
+import type { PresentationChannel, PresentationSnapshot } from "./contracts";
+import {
+  FALLBACK_ROUTE,
+  getScenarioOption,
+  OFFICIAL_ENTRY_ROUTE,
+} from "./options";
 
-export const DEFAULT_SCENARIO_ID: ScenarioId = "baseline";
-export const DEMO_REFRESH_LABEL = "12 abr 2026 · 23:20";
+export const DEFAULT_SCENARIO_ID: ScenarioId = "base";
+export const DEMO_REFRESH_LABEL = "13 abr 2026 · 09:00";
 
-const promoRiskSnapshot: DemoSnapshot = {
-  ...baselineSnapshot,
-  scenario: "promo-risk",
-  scenarioOption: getScenarioOption("promo-risk"),
-  topKpis: baselineSnapshot.topKpis.map((item) => {
-    if (item.id === "revenue-at-risk") {
-      return {
-        ...item,
-        value: "$2.9M",
-        delta: "+21% vs. base operativa",
-        insight: "Escenario de demo con promo activa y performance deteriorado en cuentas clave.",
-      };
-    }
-
-    if (item.id === "restaurants-flagged") {
-      return {
-        ...item,
-        value: "24",
-        delta: "9 con promoción activa bajo revisión",
-      };
-    }
-
-    return item;
-  }),
-  kamPressureItems: baselineSnapshot.kamPressureItems.map((item) =>
-    item.id === "diego-rivera"
-      ? {
-          ...item,
-          pressureLabel: "Presión alta por promo activa sin respuesta",
-          focus: "Se acumularon desvíos en cuentas con campaña activa y caída de órdenes.",
-          nextStep: "Separar falla de ejecución promo vs. problema operativo antes de escalar.",
-        }
-      : item,
-  ),
-  alertSummary: [
-    {
-      id: "alert-01",
-      title: "Promos activas con caída de órdenes",
-      owner: "KAM Lead",
-      status: "Bloqueando score final",
-      eta: "Hoy 14:30",
-      restaurantId: "taco-hub-monterrey",
-    },
-    ...baselineSnapshot.alertSummary.slice(1),
-  ],
-  restaurants: baselineSnapshot.restaurants.map((item) =>
-    item.id === "taco-hub-monterrey"
-      ? {
-          ...item,
-          status: "Crítico",
-          whyFlagged: "Promoción activa con caída sostenida de órdenes y señal operativa desalineada.",
-          recommendation: "Revisar ejecución promo, inventario y owner antes del siguiente corte.",
-        }
-      : item,
-  ),
-  agentDigest: {
-    ...baselineSnapshot.agentDigest,
-    headline: "El agente detectó presión promocional concentrada en cuentas con alta exposición.",
-    recommendation: "Separar de inmediato desviación promocional, cobertura comercial y calidad de input.",
-    nextStep: "Abrir Alertas y bajar primero a restaurantes con promo activa y caída persistente.",
-  },
+const PRESENTATION_CHANNEL: PresentationChannel = {
+  id: "ops-email",
+  kind: "email",
+  label: "Correo operativo",
+  destination: "ops-demo@kam-intelligence.local",
+  status: "Configurado",
+  description:
+    "Canal complementario para enviar el resumen priorizado de alertas sin volverlo dependencia central del producto.",
+  href: "mailto:ops-demo@kam-intelligence.local?subject=Rappi%20KAM%20Intelligence%20-%20Resumen%20operativo",
 };
 
-const coverageGapSnapshot: DemoSnapshot = {
-  ...baselineSnapshot,
-  scenario: "coverage-gap",
-  scenarioOption: getScenarioOption("coverage-gap"),
-  topKpis: baselineSnapshot.topKpis.map((item) => {
-    if (item.id === "data-health") {
-      return {
-        ...item,
-        value: "83%",
-        delta: "5 reglas críticas abiertas",
-        insight: "Escenario donde la cobertura del input obliga a mayor prudencia operativa.",
-      };
-    }
-
-    if (item.id === "high-priority-kams") {
-      return {
-        ...item,
-        value: "3",
-        delta: "La prioridad depende de cerrar vacíos de dato",
-      };
-    }
-
-    return item;
-  }),
-  alertSummary: [
-    {
-      id: "alert-coverage-01",
-      title: "Owners operativos faltantes en cuentas prioritarias",
-      owner: "Ops Support",
-      status: "Bloqueando score final",
-      eta: "Hoy 15:00",
-      restaurantId: "burger-lab-cdmx",
-    },
-    ...baselineSnapshot.alertSummary.slice(1),
-  ],
-  validationIssues: [
-    {
-      id: "dq-coverage-01",
-      rule: "Owner operativo no puede venir vacío",
-      affectedField: "owner_name",
-      severity: "critical",
-      status: "Abierta",
-      note: "En este escenario afecta directamente la trazabilidad del siguiente paso.",
-    },
-    {
-      id: "dq-coverage-02",
-      rule: "Cobertura promo debe mapear a catálogo vigente",
-      affectedField: "promo_window",
-      severity: "critical",
-      status: "Abierta",
-      note: "Sin este control se elevan falsos positivos en la cola operativa.",
-    },
-    ...baselineSnapshot.validationIssues.slice(1),
-  ],
-  restaurants: baselineSnapshot.restaurants.map((item) =>
-    item.id === "burger-lab-cdmx"
-      ? {
-          ...item,
-          status: "En riesgo",
-          whyFlagged: "La señal sigue presente, pero la cobertura incompleta obliga a prudencia antes de concluir.",
-          recommendation: "Validar owners y campos base antes de escalar el caso como crítico.",
-        }
-      : item,
-  ),
-  agentDigest: {
-    ...baselineSnapshot.agentDigest,
-    headline: "El agente detectó brechas de cobertura que degradan la confianza operacional.",
-    detected: "Hay señales visibles, pero parte del input clave aún exige validación antes de priorizar con dureza.",
-    whyItMatters:
-      "Cuando el dato base está incompleto, la decisión correcta es sostener prudencia explícita en vez de sobrerreaccionar.",
-    recommendation: "Cerrar primero los vacíos de cobertura que afectan owner, promo y trazabilidad.",
-    nextStep: "Entrar a Validation y confirmar qué casos pueden seguir a cola operativa y cuáles deben esperar.",
-  },
+type ScenarioSelection = {
+  restaurants: RestaurantAssessment[];
+  kams: KamAssessment[];
+  alerts: AlertFeedItem[];
+  primaryKamId?: string;
+  primaryRestaurantId?: string;
+  narrative: PresentationSnapshot["narrative"];
 };
 
-const snapshotsByScenario: Record<ScenarioId, DemoSnapshot> = {
-  baseline: baselineSnapshot,
-  "promo-risk": promoRiskSnapshot,
-  "coverage-gap": coverageGapSnapshot,
-};
+function sortRestaurantsByPriority(restaurants: RestaurantAssessment[]) {
+  return [...restaurants].sort(
+    (left, right) => right.priorityScore - left.priorityScore,
+  );
+}
 
-export function getDemoSnapshot(scenario: ScenarioId): DemoSnapshot {
-  return snapshotsByScenario[scenario] ?? snapshotsByScenario[DEFAULT_SCENARIO_ID];
+function sortKamsByPriority(kams: KamAssessment[]) {
+  return [...kams].sort(
+    (left, right) => right.priorityScore - left.priorityScore,
+  );
+}
+
+function sortAlertsByPriority(alerts: AlertFeedItem[]) {
+  return [...alerts].sort(
+    (left, right) => right.priorityScore - left.priorityScore,
+  );
+}
+
+function sortRestaurantsByStability(restaurants: RestaurantAssessment[]) {
+  return [...restaurants].sort((left, right) => {
+    if (left.priorityScore !== right.priorityScore) {
+      return left.priorityScore - right.priorityScore;
+    }
+
+    return right.confidence - left.confidence;
+  });
+}
+
+function createMiniAssessment(
+  restaurant: RestaurantAssessment,
+): RestaurantMiniAssessment {
+  return {
+    restaurantId: restaurant.restaurantId,
+    restaurantName: restaurant.restaurantName,
+    status: restaurant.status,
+    priorityScore: restaurant.priorityScore,
+    severity: restaurant.severity,
+    confidence: restaurant.confidence,
+    whyFlagged: restaurant.whyFlagged,
+  };
+}
+
+function buildDerivedDashboardSummary(
+  restaurants: RestaurantAssessment[],
+  kams: KamAssessment[],
+  baseOutput: Case2OutputBundle,
+) {
+  const signalCounts = new Map<SignalType, number>();
+  const recommendationCounts = new Map<RecommendationCode, number>();
+
+  for (const restaurant of restaurants) {
+    for (const signal of restaurant.signals) {
+      signalCounts.set(signal.type, (signalCounts.get(signal.type) ?? 0) + 1);
+    }
+
+    recommendationCounts.set(
+      restaurant.recommendedAction.code,
+      (recommendationCounts.get(restaurant.recommendedAction.code) ?? 0) + 1,
+    );
+  }
+
+  return {
+    totalRestaurants: restaurants.length,
+    criticalCount: restaurants.filter(
+      (restaurant) => restaurant.status === "critical",
+    ).length,
+    atRiskCount: restaurants.filter(
+      (restaurant) => restaurant.status === "at_risk",
+    ).length,
+    watchlistCount: restaurants.filter(
+      (restaurant) => restaurant.status === "watchlist",
+    ).length,
+    stableCount: restaurants.filter(
+      (restaurant) => restaurant.status === "stable",
+    ).length,
+    topAlertCount: restaurants.filter(
+      (restaurant) => restaurant.severity === "high",
+    ).length,
+    kamUnderPressureCount: kams.filter(
+      (kam) => kam.portfolioStatus !== "stable",
+    ).length,
+    cityRiskSummary: baseOutput.global.dashboard.cityRiskSummary,
+    verticalRiskSummary: baseOutput.global.dashboard.verticalRiskSummary,
+    topSignalsSummary: [...signalCounts.entries()]
+      .map(([signalType, count]) => ({ signalType, count }))
+      .sort((left, right) => right.count - left.count),
+    interventionSummary: [...recommendationCounts.entries()]
+      .map(([recommendationCode, count]) => ({ recommendationCode, count }))
+      .sort((left, right) => right.count - left.count),
+  };
+}
+
+function buildDerivedPortfolio(
+  restaurants: RestaurantAssessment[],
+  kams: KamAssessment[],
+) {
+  const averagePriorityScore =
+    restaurants.length > 0
+      ? restaurants.reduce(
+          (sum, restaurant) => sum + restaurant.priorityScore,
+          0,
+        ) / restaurants.length
+      : 0;
+  const concentrationRiskCount = kams.reduce(
+    (sum, kam) => sum + kam.portfolioBreakdown.concentrationRiskCount,
+    0,
+  );
+  const activeKams = kams.filter((kam) => kam.portfolioStatus !== "stable");
+  const portfolioStatus: "critical" | "under_pressure" | "stable" =
+    restaurants.some((restaurant) => restaurant.status === "critical")
+      ? "critical"
+      : restaurants.some((restaurant) => restaurant.status === "at_risk")
+        ? "under_pressure"
+        : "stable";
+
+  return {
+    portfolioStatus,
+    totalRestaurants: restaurants.length,
+    totalKams: kams.length,
+    concentrationRiskCount,
+    averagePriorityScore,
+    highestPriorityRestaurants: sortRestaurantsByPriority(restaurants)
+      .slice(0, 5)
+      .map(createMiniAssessment),
+    kamsUnderPressure: activeKams.map((kam) => ({
+      kamId: kam.kamId,
+      kamName: kam.kamName,
+      priorityScore: kam.priorityScore,
+      portfolioStatus: kam.portfolioStatus,
+    })),
+  };
+}
+
+function buildScenarioBundle(
+  baseOutput: Case2OutputBundle,
+  selection: ScenarioSelection,
+): Case2OutputBundle {
+  const selectedRestaurantIds = new Set(
+    selection.restaurants.map((restaurant) => restaurant.restaurantId),
+  );
+  const dashboard = buildDerivedDashboardSummary(
+    selection.restaurants,
+    selection.kams,
+    baseOutput,
+  );
+  const portfolio = buildDerivedPortfolio(
+    selection.restaurants,
+    selection.kams,
+  );
+
+  return {
+    ...baseOutput,
+    restaurants: selection.restaurants,
+    kams: selection.kams,
+    alerts: selection.alerts,
+    validation: {
+      ...baseOutput.validation,
+      overlays: baseOutput.validation.overlays.filter((overlay) =>
+        selectedRestaurantIds.has(overlay.entityId),
+      ),
+    },
+    global: {
+      portfolio,
+      dashboard,
+    },
+  };
+}
+
+function selectBase(baseOutput: Case2OutputBundle): ScenarioSelection {
+  const primaryKam = sortKamsByPriority(baseOutput.kams)[0];
+  const primaryRestaurant = sortRestaurantsByPriority(
+    baseOutput.restaurants,
+  )[0];
+
+  return {
+    restaurants: baseOutput.restaurants,
+    kams: baseOutput.kams,
+    alerts: sortAlertsByPriority(baseOutput.alerts),
+    primaryKamId: primaryKam?.kamId,
+    primaryRestaurantId: primaryRestaurant?.restaurantId,
+    narrative: {
+      title: "Base operativa",
+      description:
+        "Usa el bundle completo para recorrer la lectura ejecutiva, comparar KAMs y bajar hasta el caso individual sin ramas paralelas.",
+      nextStep: "Entrar al dashboard y bajar a la vista KAM priorizada.",
+    },
+  };
+}
+
+function selectCrisis(baseOutput: Case2OutputBundle): ScenarioSelection {
+  const crisisRestaurants = sortRestaurantsByPriority(
+    baseOutput.restaurants.filter(
+      (restaurant) =>
+        restaurant.status === "critical" || restaurant.status === "at_risk",
+    ),
+  ).slice(0, 12);
+  const restaurants =
+    crisisRestaurants.length > 0
+      ? crisisRestaurants
+      : sortRestaurantsByPriority(baseOutput.restaurants).slice(0, 12);
+  const kamIds = new Set(restaurants.map((restaurant) => restaurant.kamId));
+  const kams = sortKamsByPriority(
+    baseOutput.kams.filter(
+      (kam) => kamIds.has(kam.kamId) || kam.portfolioStatus !== "stable",
+    ),
+  );
+  const alerts = sortAlertsByPriority(
+    baseOutput.alerts.filter(
+      (alert) =>
+        (alert.entityType === "restaurant" &&
+          restaurants.some((item) => item.restaurantId === alert.entityId)) ||
+        (alert.entityType === "kam" &&
+          kams.some((item) => item.kamId === alert.entityId)),
+    ),
+  );
+
+  return {
+    restaurants,
+    kams,
+    alerts,
+    primaryKamId: kams[0]?.kamId,
+    primaryRestaurantId: restaurants[0]?.restaurantId,
+    narrative: {
+      title: "Escenario de crisis",
+      description:
+        "Concentra la lectura en los casos críticos y en riesgo ya presentes en el bundle oficial para explicar urgencia sin inventar scoring nuevo.",
+      nextStep:
+        "Mostrar primero el dashboard y luego abrir el KAM con mayor prioridad visible.",
+    },
+  };
+}
+
+function selectDiscrepancias(baseOutput: Case2OutputBundle): ScenarioSelection {
+  const overlaysByRestaurantId = new Map(
+    baseOutput.validation.overlays.map((overlay) => [
+      overlay.entityId,
+      overlay,
+    ]),
+  );
+  const discrepancyRestaurants = sortRestaurantsByPriority(
+    baseOutput.restaurants.filter((restaurant) => {
+      const overlay = overlaysByRestaurantId.get(restaurant.restaurantId);
+      return (
+        overlay?.degradedByValidation ||
+        (overlay?.relatedValidationFlags.length ?? 0) > 0 ||
+        restaurant.benchmark?.benchmarkConflict ||
+        restaurant.signals.some(
+          (signal) =>
+            signal.type === "benchmark_conflict" ||
+            signal.type === "data_quality_risk",
+        )
+      );
+    }),
+  ).slice(0, 12);
+  const restaurants =
+    discrepancyRestaurants.length > 0
+      ? discrepancyRestaurants
+      : sortRestaurantsByPriority(
+          [...baseOutput.restaurants].sort(
+            (left, right) => left.confidence - right.confidence,
+          ),
+        ).slice(0, 12);
+  const kamIds = new Set(restaurants.map((restaurant) => restaurant.kamId));
+  const kams = sortKamsByPriority(
+    baseOutput.kams.filter((kam) => kamIds.has(kam.kamId)),
+  );
+  const alerts = sortAlertsByPriority(
+    baseOutput.alerts.filter(
+      (alert) =>
+        (alert.entityType === "restaurant" &&
+          restaurants.some((item) => item.restaurantId === alert.entityId)) ||
+        (alert.entityType === "kam" && kamIds.has(alert.entityId)),
+    ),
+  );
+
+  return {
+    restaurants,
+    kams,
+    alerts,
+    primaryKamId: kams[0]?.kamId,
+    primaryRestaurantId: restaurants[0]?.restaurantId,
+    narrative: {
+      title: "Escenario de discrepancias",
+      description:
+        "Resalta conflictos de benchmark, degradación de confianza y alertas donde la decisión correcta es prudencia explícita.",
+      nextStep:
+        "Usar Validation como bloque de defensa y luego bajar a un caso afectado.",
+    },
+  };
+}
+
+function selectEstable(baseOutput: Case2OutputBundle): ScenarioSelection {
+  const stableRestaurants = sortRestaurantsByStability(
+    baseOutput.restaurants.filter(
+      (restaurant) =>
+        restaurant.status === "stable" || restaurant.status === "watchlist",
+    ),
+  ).slice(0, 12);
+  const restaurants =
+    stableRestaurants.length > 0
+      ? stableRestaurants
+      : sortRestaurantsByStability(baseOutput.restaurants).slice(0, 12);
+  const kamIds = new Set(restaurants.map((restaurant) => restaurant.kamId));
+  const kams = sortKamsByPriority(
+    baseOutput.kams.filter((kam) => kamIds.has(kam.kamId)),
+  );
+  const alerts = sortAlertsByPriority(
+    baseOutput.alerts.filter((alert) => {
+      if (alert.entityType === "restaurant") {
+        return restaurants.some((item) => item.restaurantId === alert.entityId);
+      }
+
+      return kamIds.has(alert.entityId);
+    }),
+  );
+
+  return {
+    restaurants,
+    kams,
+    alerts,
+    primaryKamId: kams[0]?.kamId,
+    primaryRestaurantId: restaurants[0]?.restaurantId,
+    narrative: {
+      title: "Escenario estable",
+      description:
+        "Recorta el walkthrough a portfolios y cuentas con menor urgencia para demostrar que la app también soporta lectura prudente y seguimiento.",
+      nextStep:
+        "Mostrar cómo cambia la priorización sin alterar fórmulas ni umbrales oficiales.",
+    },
+  };
+}
+
+function selectFocusedKam(baseOutput: Case2OutputBundle): ScenarioSelection {
+  const primaryKam = sortKamsByPriority(baseOutput.kams)[0];
+  const restaurants = sortRestaurantsByPriority(
+    baseOutput.restaurants.filter(
+      (restaurant) => restaurant.kamId === primaryKam?.kamId,
+    ),
+  );
+  const kams = primaryKam ? [primaryKam] : [];
+  const alerts = sortAlertsByPriority(
+    baseOutput.alerts.filter((alert) => {
+      if (!primaryKam) {
+        return false;
+      }
+
+      if (alert.entityType === "kam") {
+        return alert.entityId === primaryKam.kamId;
+      }
+
+      return restaurants.some(
+        (restaurant) => restaurant.restaurantId === alert.entityId,
+      );
+    }),
+  );
+
+  return {
+    restaurants,
+    kams,
+    alerts,
+    primaryKamId: primaryKam?.kamId,
+    primaryRestaurantId: restaurants[0]?.restaurantId,
+    narrative: {
+      title: "Foco KAM",
+      description:
+        "Bloquea el walkthrough en un solo portfolio para explicar continuidad entre resumen ejecutivo, detalle KAM y detalle de restaurante.",
+      nextStep:
+        "Entrar directo al KAM priorizado y bajar desde ahí a la cuenta principal.",
+    },
+  };
+}
+
+function getScenarioSelection(
+  baseOutput: Case2OutputBundle,
+  scenario: ScenarioId,
+): ScenarioSelection {
+  switch (scenario) {
+    case "crisis":
+      return selectCrisis(baseOutput);
+    case "discrepancias":
+      return selectDiscrepancias(baseOutput);
+    case "estable":
+      return selectEstable(baseOutput);
+    case "foco-kam":
+      return selectFocusedKam(baseOutput);
+    case "base":
+    default:
+      return selectBase(baseOutput);
+  }
+}
+
+export function getPresentationSnapshot(
+  baseOutput: Case2OutputBundle,
+  scenario: ScenarioId,
+): PresentationSnapshot {
+  const selection = getScenarioSelection(baseOutput, scenario);
+  const bundle = buildScenarioBundle(baseOutput, selection);
+
+  return {
+    scenario,
+    scenarioOption: getScenarioOption(scenario),
+    bundle,
+    walkthrough: {
+      entryRoute: OFFICIAL_ENTRY_ROUTE,
+      fallbackRoute: FALLBACK_ROUTE,
+      primaryKamId: selection.primaryKamId,
+      primaryRestaurantId: selection.primaryRestaurantId,
+    },
+    narrative: selection.narrative,
+    channel: PRESENTATION_CHANNEL,
+  };
 }

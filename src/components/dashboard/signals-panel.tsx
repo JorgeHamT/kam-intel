@@ -21,8 +21,12 @@ export function SignalsPanel({ items }: SignalsPanelProps) {
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h3 className="text-base font-semibold text-ink">{item.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{item.detection}</p>
+                <h3 className="text-base font-semibold text-ink">
+                  {item.title}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {item.detection}
+                </p>
               </div>
               <StatusBadge
                 label={

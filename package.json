@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "test:agent": "node --experimental-strip-types --experimental-specifier-resolution=node --test ./src/lib/agent/tests/run-agent-index.test.ts",
-    "test:data": "node --experimental-strip-types --experimental-specifier-resolution=node --test ./src/lib/data/case2/case2-data.test.ts",
+    "test:data": "node --experimental-strip-types --experimental-specifier-resolution=node --test ./src/lib/data/case2/*.test.ts",
     "typecheck": "tsc --noEmit --incremental false",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

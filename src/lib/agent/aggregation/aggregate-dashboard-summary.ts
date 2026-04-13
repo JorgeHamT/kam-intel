@@ -63,7 +63,10 @@ export function aggregateDashboardSummary(params: {
 }): DashboardAgentSummary {
   const { restaurants, kams, metadata, alertCount } = params;
   const signalCounts = new Map<TopSignalsSummaryItem["signalType"], number>();
-  const interventionCounts = new Map<InterventionSummaryItem["recommendationCode"], number>();
+  const interventionCounts = new Map<
+    InterventionSummaryItem["recommendationCode"],
+    number
+  >();
 
   for (const restaurant of restaurants) {
     for (const signal of restaurant.signals) {
@@ -78,12 +81,22 @@ export function aggregateDashboardSummary(params: {
 
   return {
     totalRestaurants: restaurants.length,
-    criticalCount: restaurants.filter((restaurant) => restaurant.status === "critical").length,
-    atRiskCount: restaurants.filter((restaurant) => restaurant.status === "at_risk").length,
-    watchlistCount: restaurants.filter((restaurant) => restaurant.status === "watchlist").length,
-    stableCount: restaurants.filter((restaurant) => restaurant.status === "stable").length,
+    criticalCount: restaurants.filter(
+      (restaurant) => restaurant.status === "critical",
+    ).length,
+    atRiskCount: restaurants.filter(
+      (restaurant) => restaurant.status === "at_risk",
+    ).length,
+    watchlistCount: restaurants.filter(
+      (restaurant) => restaurant.status === "watchlist",
+    ).length,
+    stableCount: restaurants.filter(
+      (restaurant) => restaurant.status === "stable",
+    ).length,
     topAlertCount: alertCount,
-    kamUnderPressureCount: kams.filter((kam) => kam.portfolioStatus !== "stable").length,
+    kamUnderPressureCount: kams.filter(
+      (kam) => kam.portfolioStatus !== "stable",
+    ).length,
     cityRiskSummary: buildCityRiskSummary(restaurants, metadata),
     verticalRiskSummary: buildVerticalRiskSummary(restaurants, metadata),
     topSignalsSummary: [...signalCounts.entries()]

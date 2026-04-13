@@ -4,12 +4,17 @@
 
 :root {
   color-scheme: light;
-  --surface-app: #fff6f2;
-  --surface-panel: rgba(255, 255, 255, 0.9);
-  --surface-soft: #fff1ee;
-  --border-soft: rgba(255, 255, 255, 0.75);
-  --ink-strong: #171717;
-  --ink-muted: #5c6472;
+  --surface-app: #f4f4f6;
+  --surface-panel: #ffffff;
+  --surface-soft: #f8f8fa;
+  --surface-rail: #f1f1f3;
+  --border-soft: #e8e8ec;
+  --border-strong: #d8d9df;
+  --ink-strong: #17181b;
+  --ink-muted: #6d7481;
+  --brand-red: #f24d4f;
+  --brand-red-soft: #fff0f0;
+  --panel-shadow: 0 8px 24px rgba(20, 20, 24, 0.05);
 }
 
 * {
@@ -24,9 +29,7 @@ body {
   margin: 0;
   min-height: 100vh;
   font-family: "Avenir Next", "Montserrat", "Segoe UI", sans-serif;
-  background:
-    radial-gradient(circle at top right, rgba(242, 77, 79, 0.08), transparent 28%),
-    linear-gradient(180deg, #fff8f6 0%, #fff6f2 100%);
+  background: var(--surface-app);
   color: var(--ink-strong);
   text-rendering: optimizeLegibility;
 }
@@ -45,4 +48,19 @@ textarea {
 
 ::selection {
   background: rgba(242, 77, 79, 0.18);
+}
+
+.reference-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #d5d7de transparent;
+}
+
+.reference-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.reference-scrollbar::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #d5d7de;
 }

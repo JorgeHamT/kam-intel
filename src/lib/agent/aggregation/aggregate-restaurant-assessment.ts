@@ -1,10 +1,16 @@
 import type { AgentConfig } from "../config/index.ts";
 import type { RestaurantMetricsInput } from "../contracts/agent-input.ts";
-import type { BenchmarkComparison, RestaurantAssessment } from "../contracts/agent-output.ts";
+import type {
+  BenchmarkComparison,
+  RestaurantAssessment,
+} from "../contracts/agent-output.ts";
 import { buildRestaurantConfidenceOverlay } from "../helpers/confidence-utils.ts";
 import { selectPeerGroup } from "../helpers/peer-group-utils.ts";
 import { computeRestaurantPriority } from "../scoring/compute-restaurant-priority.ts";
-import { classifySeverity, classifyStatus } from "../scoring/severity-classification.ts";
+import {
+  classifySeverity,
+  classifyStatus,
+} from "../scoring/severity-classification.ts";
 import {
   buildBusinessSummary,
   buildWhyFlagged,
@@ -16,10 +22,23 @@ export function aggregateRestaurantAssessment(
   restaurant: RestaurantMetricsInput,
   config: AgentConfig,
   portfolioContext: { kamPortfolioGmv7d: number; concentrationShare: number },
-): { assessment: RestaurantAssessment; validationOverlay: ReturnType<typeof buildRestaurantConfidenceOverlay> } {
-  const preliminarySignals = detectRestaurantSignals(restaurant, config, portfolioContext);
-  const benchmarkConflict = preliminarySignals.some((signal) => signal.type === "benchmark_conflict");
-  const validationOverlay = buildRestaurantConfidenceOverlay(restaurant, config, benchmarkConflict);
+): {
+  assessment: RestaurantAssessment;
+  validationOverlay: ReturnType<typeof buildRestaurantConfidenceOverlay>;
+} {
+  const preliminarySignals = detectRestaurantSignals(
+    restaurant,
+    config,
+    portfolioContext,
+  );
+  const benchmarkConflict = preliminarySignals.some(
+    (signal) => signal.type === "benchmark_conflict",
+  );
+  const validationOverlay = buildRestaurantConfidenceOverlay(
+    restaurant,
+    config,
+    benchmarkConflict,
+  );
   const { priorityScore, breakdown } = computeRestaurantPriority(
     restaurant,
     preliminarySignals,
@@ -29,7 +48,9 @@ export function aggregateRestaurantAssessment(
   const status = classifyStatus(priorityScore, preliminarySignals, config);
   const severity = classifySeverity(priorityScore, config);
   const benchmarkSelection = selectPeerGroup(restaurant.benchmark, config);
-  const notableDeltas = Object.entries(benchmarkSelection.candidate?.comparisons ?? {})
+  const notableDeltas = Object.entries(
+    benchmarkSelection.candidate?.comparisons ?? {},
+  )
     .filter(([, value]) => value)
     .slice(0, 4)
     .map(([metric, value]) => ({
@@ -39,16 +60,17 @@ export function aggregateRestaurantAssessment(
       deltaToMedian: value?.deltaToMedian ?? null,
     }));
 
-  const benchmark: BenchmarkComparison | undefined = benchmarkSelection.candidate
-    ? {
-        peerGroupUsed: benchmarkSelection.candidate.key,
-        peerGroupType: benchmarkSelection.candidate.type,
-        peerGroupConfidence: benchmarkSelection.confidence,
-        sampleSize: benchmarkSelection.candidate.sampleSize,
-        notableDeltas,
-        benchmarkConflict,
-      }
-    : undefined;
+  const benchmark: BenchmarkComparison | undefined =
+    benchmarkSelection.candidate
+      ? {
+          peerGroupUsed: benchmarkSelection.candidate.key,
+          peerGroupType: benchmarkSelection.candidate.type,
+          peerGroupConfidence: benchmarkSelection.confidence,
+          sampleSize: benchmarkSelection.candidate.sampleSize,
+          notableDeltas,
+          benchmarkConflict,
+        }
+      : undefined;
 
   const { recommendedAction, nextBestStep } = recommendRestaurantAction({
     status,

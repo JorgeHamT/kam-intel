@@ -23,4 +23,4 @@ Permitir desarrollo paralelo por frentes sin mezclar trabajo ni romper estabilid
 
 \#\# Recomendación  
 Abrir 3 a 5 worktrees máximo al inicio.  
-No abrir worktrees innecesarios por cada microtarea.  
+No abrir worktrees innecesarios por cada microtarea.

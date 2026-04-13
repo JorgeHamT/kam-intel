@@ -1,0 +1,11 @@
+{
+  "/_not-found/page": "/_not-found",
+  "/alerts/page": "/alerts",
+  "/deck/page": "/deck",
+  "/page": "/",
+  "/kams/[kamId]/page": "/kams/[kamId]",
+  "/restaurants/[restaurantId]/page": "/restaurants/[restaurantId]",
+  "/data-validation/page": "/data-validation",
+  "/validation/page": "/validation",
+  "/kams/page": "/kams"
+}

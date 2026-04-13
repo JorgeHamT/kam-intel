@@ -93,4 +93,3 @@ Módulos esperados:
 \- overview de pantallas  
 \- demo flow  
 \- valor de negocio
-

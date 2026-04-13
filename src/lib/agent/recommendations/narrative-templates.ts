@@ -1,7 +1,14 @@
-import type { BenchmarkComparison, RestaurantAssessment, Signal } from "../contracts/agent-output.ts";
+import type {
+  BenchmarkComparison,
+  RestaurantAssessment,
+  Signal,
+} from "../contracts/agent-output.ts";
 import { toFixedMetric, toPercentage } from "../helpers/scoring-utils.ts";
 
-function formatEvidenceValue(metric: string, value: number | string | boolean | null): string {
+function formatEvidenceValue(
+  metric: string,
+  value: number | string | boolean | null,
+): string {
   if (typeof value === "number") {
     return metric.includes("pct") ? toPercentage(value) : toFixedMetric(value);
   }
@@ -45,7 +52,9 @@ export function buildWhyFlagged(params: {
   validationNote?: string;
   validationFlagsCount?: number;
 }): string[] {
-  const primarySignals = params.signals.filter((signal) => signal.affectsRecommendation).slice(0, 3);
+  const primarySignals = params.signals
+    .filter((signal) => signal.affectsRecommendation)
+    .slice(0, 3);
   const primarySignal = primarySignals[0];
   const supportSignals = primarySignals.slice(1);
   const mainEvidence = primarySignal?.evidence[0];
@@ -65,7 +74,9 @@ export function buildWhyFlagged(params: {
   }
 
   narratives.push(buildBenchmarkReference(params.benchmark));
-  narratives.push(`Nivel de confianza: ${buildConfidenceLabel(params.confidence)} (${params.confidence}).`);
+  narratives.push(
+    `Nivel de confianza: ${buildConfidenceLabel(params.confidence)} (${params.confidence}).`,
+  );
 
   if (params.validationFlagsCount && params.validationFlagsCount > 0) {
     narratives.push(
@@ -79,13 +90,14 @@ export function buildWhyFlagged(params: {
 }
 
 export function buildBusinessSummary(assessment: RestaurantAssessment): string {
-  const lead = assessment.status === "critical"
-    ? "Cuenta bajo presión operativa relevante."
-    : assessment.status === "at_risk"
-      ? "Cuenta con deterioro que requiere seguimiento."
-      : assessment.status === "watchlist"
-        ? "Cuenta a observar con señales tempranas."
-        : "Cuenta sin presión operativa relevante en esta corrida.";
+  const lead =
+    assessment.status === "critical"
+      ? "Cuenta bajo presión operativa relevante."
+      : assessment.status === "at_risk"
+        ? "Cuenta con deterioro que requiere seguimiento."
+        : assessment.status === "watchlist"
+          ? "Cuenta a observar con señales tempranas."
+          : "Cuenta sin presión operativa relevante en esta corrida.";
   const benchmarkLine = assessment.benchmark?.peerGroupUsed
     ? `Peer group usado: ${assessment.benchmark.peerGroupUsed} con confianza ${assessment.peerGroupConfidence ?? "sin dato"}.`
     : "Sin peer group usable para comparación fuerte.";

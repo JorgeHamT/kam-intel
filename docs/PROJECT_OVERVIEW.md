@@ -54,25 +54,25 @@ Por ello, la solución implementa una capa de validación y recalculo antes del 
 \#\# Principios del proyecto
 
 1\. \*\*Nada de humo\*\*  
-   No se deben mostrar métricas, señales o narrativas que no puedan defenderse con el dataset o con derivados razonables.
+ No se deben mostrar métricas, señales o narrativas que no puedan defenderse con el dataset o con derivados razonables.
 
 2\. \*\*La lógica del agente debe ser visible\*\*  
-   La interfaz debe mostrar cosas como:  
-   \- Signals detected  
-   \- Why flagged  
-   \- Recommended action  
-   \- Next best step  
-   \- KAM briefing  
-   \- Priority score
+ La interfaz debe mostrar cosas como:  
+ \- Signals detected  
+ \- Why flagged  
+ \- Recommended action  
+ \- Next best step  
+ \- KAM briefing  
+ \- Priority score
 
 3\. \*\*Demo primero\*\*  
-   La solución debe poder correrse en vivo y reiniciarse fácilmente.
+ La solución debe poder correrse en vivo y reiniciarse fácilmente.
 
 4\. \*\*Diseño premium pero creíble\*\*  
-   La interfaz debe verse moderna, ejecutiva y alineada visualmente con Rappi, pero sin exagerar capacidades que no existen.
+ La interfaz debe verse moderna, ejecutiva y alineada visualmente con Rappi, pero sin exagerar capacidades que no existen.
 
 5\. \*\*Todo debe estar alineado al negocio\*\*  
-   No se trata de solo visualizar datos, sino de mostrar consecuencias, impacto y acciones.
+ No se trata de solo visualizar datos, sino de mostrar consecuencias, impacto y acciones.
 
 \#\# Stack propuesto
 
@@ -107,4 +107,4 @@ Al final del proyecto debe existir:
 \- un README sólido  
 \- un one-pager  
 \- un deck interactivo  
-\- un flujo de demo robusto y reiniciable  
+\- un flujo de demo robusto y reiniciable

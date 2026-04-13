@@ -32,7 +32,9 @@ export function FilterTabs({ tabs, activeId }: FilterTabsProps) {
               <span
                 className={cn(
                   "rounded-full px-2 py-0.5 text-xs font-semibold",
-                  isActive ? "bg-white text-brand-700" : "bg-slate-100 text-slate-600",
+                  isActive
+                    ? "bg-white text-brand-700"
+                    : "bg-slate-100 text-slate-600",
                 )}
               >
                 {tab.count}

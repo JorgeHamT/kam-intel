@@ -70,7 +70,9 @@ export type RestaurantMetricsInput = {
   npsScore: number | null;
   benchmark?: PeerBenchmarkContext;
   quality?: DataQualityFlags;
-  originalVsValidatedDiff?: Partial<Record<string, number | string | boolean | null>>;
+  originalVsValidatedDiff?: Partial<
+    Record<string, number | string | boolean | null>
+  >;
   metadata?: Record<string, unknown>;
 };
 
@@ -90,4 +92,3 @@ export type AgentInput = {
   generatedAt?: string;
   metadata?: Record<string, unknown>;
 };
-

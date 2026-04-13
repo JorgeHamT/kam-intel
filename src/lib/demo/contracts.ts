@@ -1,34 +1,30 @@
-import type {
-  AgentSignal,
-  AlertSummaryItem,
-  DataValidationIssue,
-  DeckSection,
-  KamPressureItem,
-  KamRecord,
-  Kpi,
-  RestaurantRecord,
-  ScenarioId,
-  ScenarioOption,
-} from "@/types/domain";
+import type { Case2OutputBundle } from "@/lib/data/case2/output";
+import type { ScenarioId, ScenarioOption } from "@/types/domain";
 
-export type DemoAgentDigest = {
-  headline: string;
-  detected: string;
-  whyItMatters: string;
-  recommendation: string;
-  nextStep: string;
-  signals: AgentSignal[];
+export type PresentationChannel = {
+  id: "ops-email";
+  kind: "email";
+  label: string;
+  destination: string;
+  status: "Configurado";
+  description: string;
+  href: string;
 };
 
-export type DemoSnapshot = {
+export type PresentationSnapshot = {
   scenario: ScenarioId;
   scenarioOption: ScenarioOption;
-  topKpis: Kpi[];
-  kamPressureItems: KamPressureItem[];
-  alertSummary: AlertSummaryItem[];
-  kams: KamRecord[];
-  restaurants: RestaurantRecord[];
-  validationIssues: DataValidationIssue[];
-  deckSections: DeckSection[];
-  agentDigest: DemoAgentDigest;
+  bundle: Case2OutputBundle;
+  walkthrough: {
+    entryRoute: string;
+    fallbackRoute: string;
+    primaryKamId?: string;
+    primaryRestaurantId?: string;
+  };
+  narrative: {
+    title: string;
+    description: string;
+    nextStep: string;
+  };
+  channel: PresentationChannel;
 };

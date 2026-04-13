@@ -33,8 +33,12 @@ export function SectionCard({
               {eyebrow}
             </p>
           ) : null}
-          <h2 className="text-xl font-semibold tracking-[-0.02em] text-ink">{title}</h2>
-          {description ? <p className="text-sm leading-6 text-slate-600">{description}</p> : null}
+          <h2 className="text-xl font-semibold tracking-[-0.02em] text-ink">
+            {title}
+          </h2>
+          {description ? (
+            <p className="text-sm leading-6 text-slate-600">{description}</p>
+          ) : null}
         </div>
         {actions}
       </div>

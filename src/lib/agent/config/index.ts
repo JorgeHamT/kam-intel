@@ -17,12 +17,16 @@ export const defaultAgentConfig: AgentConfig = {
   featureFlags: agentFeatureFlags,
 };
 
-export function createAgentConfig(overrides: Partial<AgentConfig> = {}): AgentConfig {
+export function createAgentConfig(
+  overrides: Partial<AgentConfig> = {},
+): AgentConfig {
   return {
     thresholds: { ...defaultAgentConfig.thresholds, ...overrides.thresholds },
     weights: { ...defaultAgentConfig.weights, ...overrides.weights },
     confidence: { ...defaultAgentConfig.confidence, ...overrides.confidence },
-    featureFlags: { ...defaultAgentConfig.featureFlags, ...overrides.featureFlags },
+    featureFlags: {
+      ...defaultAgentConfig.featureFlags,
+      ...overrides.featureFlags,
+    },
   } as AgentConfig;
 }
-

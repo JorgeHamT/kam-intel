@@ -1,4 +1,8 @@
-import type { AlertFeedItem, KamAssessment, RestaurantAssessment } from "../contracts/agent-output.ts";
+import type {
+  AlertFeedItem,
+  KamAssessment,
+  RestaurantAssessment,
+} from "../contracts/agent-output.ts";
 import { recommendKamAction } from "../recommendations/recommend-kam-action.ts";
 
 export function buildAlertFeed(params: {
@@ -39,7 +43,12 @@ export function buildAlertFeed(params: {
         entityId: kam.kamId,
         title: `${kam.kamName ?? kam.kamId} bajo presión`,
         priorityScore: kam.priorityScore,
-        severity: kam.priorityScore >= 70 ? "high" : kam.priorityScore >= 40 ? "medium" : "low",
+        severity:
+          kam.priorityScore >= 70
+            ? "high"
+            : kam.priorityScore >= 40
+              ? "medium"
+              : "low",
         whyFlagged: [kam.portfolioSummary],
         recommendedAction: recommendation.recommendation,
         nextBestStep: recommendation.nextStep,
@@ -48,5 +57,7 @@ export function buildAlertFeed(params: {
       };
     });
 
-  return [...restaurantAlerts, ...kamAlerts].sort((left, right) => right.priorityScore - left.priorityScore);
+  return [...restaurantAlerts, ...kamAlerts].sort(
+    (left, right) => right.priorityScore - left.priorityScore,
+  );
 }

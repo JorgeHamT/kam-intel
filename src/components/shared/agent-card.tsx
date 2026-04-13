@@ -34,7 +34,9 @@ export function AgentCard({
       <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
         {label}
       </p>
-      {title ? <h3 className="mt-2 text-lg font-semibold text-ink">{title}</h3> : null}
+      {title ? (
+        <h3 className="mt-2 text-lg font-semibold text-ink">{title}</h3>
+      ) : null}
       <div className="mt-3 text-sm leading-6 text-slate-700">{children}</div>
     </article>
   );

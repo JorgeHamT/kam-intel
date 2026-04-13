@@ -1,4 +1,9 @@
-export type ScenarioId = "baseline" | "promo-risk" | "coverage-gap";
+export type ScenarioId =
+  | "base"
+  | "crisis"
+  | "discrepancias"
+  | "estable"
+  | "foco-kam";
 
 export type HealthTone = "critical" | "warning" | "stable" | "info";
 

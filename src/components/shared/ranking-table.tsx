@@ -33,7 +33,9 @@ export function RankingTable({
           </p>
         ) : null}
         <h2 className="mt-2 text-xl font-semibold text-ink">{title}</h2>
-        {description ? <p className="mt-2 text-sm text-slate-600">{description}</p> : null}
+        {description ? (
+          <p className="mt-2 text-sm text-slate-600">{description}</p>
+        ) : null}
       </div>
 
       <div className="overflow-hidden rounded-[24px] border border-slate-200">
@@ -68,7 +70,10 @@ export function RankingTable({
                       tone={row.tone}
                     />
                     {row.href ? (
-                      <Link href={row.href} className="font-semibold text-brand-700">
+                      <Link
+                        href={row.href}
+                        className="font-semibold text-brand-700"
+                      >
                         Abrir
                       </Link>
                     ) : null}

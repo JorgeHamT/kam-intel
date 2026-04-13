@@ -1,1 +1,4 @@
-export { getKamPriorityTone, getRestaurantTone } from "./demo-view-model-helpers";
+export {
+  getKamPriorityTone,
+  getRestaurantTone,
+} from "./demo-view-model-helpers";

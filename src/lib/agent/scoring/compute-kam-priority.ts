@@ -1,5 +1,8 @@
 import type { AgentConfig } from "../config/index.ts";
-import type { RestaurantAssessment, Signal } from "../contracts/agent-output.ts";
+import type {
+  RestaurantAssessment,
+  Signal,
+} from "../contracts/agent-output.ts";
 import { clamp, round } from "../helpers/scoring-utils.ts";
 
 export function computeKamPriority(
@@ -17,17 +20,26 @@ export function computeKamPriority(
       score += config.weights.kam.watchlistRestaurant;
     }
 
-    if (restaurant.signals.some((signal) => signal.type === "concentration_risk")) {
+    if (
+      restaurant.signals.some((signal) => signal.type === "concentration_risk")
+    ) {
       score += config.weights.kam.concentrationRisk;
     }
 
-    if (restaurant.confidence < config.thresholds.signals.confidence.lowConfidence) {
+    if (
+      restaurant.confidence < config.thresholds.signals.confidence.lowConfidence
+    ) {
       score -= config.weights.kam.lowConfidencePenalty;
     }
   }
 
   const confidence = restaurants.length
-    ? round(restaurants.reduce((acc, restaurant) => acc + restaurant.confidence, 0) / restaurants.length)
+    ? round(
+        restaurants.reduce(
+          (acc, restaurant) => acc + restaurant.confidence,
+          0,
+        ) / restaurants.length,
+      )
     : 1;
 
   const uniqueSignals = new Map<string, Signal>();
@@ -41,11 +53,13 @@ export function computeKamPriority(
 
   return {
     priorityScore: clamp(score, 0, 100),
-    topSignals: [...uniqueSignals.values()].sort(
-      (left, right) =>
-        config.weights.signalImpact[right.severityHint] - config.weights.signalImpact[left.severityHint],
-    ).slice(0, 5),
+    topSignals: [...uniqueSignals.values()]
+      .sort(
+        (left, right) =>
+          config.weights.signalImpact[right.severityHint] -
+          config.weights.signalImpact[left.severityHint],
+      )
+      .slice(0, 5),
     confidence,
   };
 }
-

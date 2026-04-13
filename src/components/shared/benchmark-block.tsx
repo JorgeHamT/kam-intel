@@ -30,7 +30,9 @@ export function BenchmarkBlock({
         <MetricPillar label={rightLabel} value={rightValue} />
       </div>
 
-      {footnote ? <p className="mt-4 text-xs leading-5 text-slate-500">{footnote}</p> : null}
+      {footnote ? (
+        <p className="mt-4 text-xs leading-5 text-slate-500">{footnote}</p>
+      ) : null}
     </section>
   );
 }
@@ -38,8 +40,12 @@ export function BenchmarkBlock({
 function MetricPillar({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-[24px] border border-slate-200 bg-slate-50/80 p-5">
-      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{label}</p>
-      <p className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-ink">{value}</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+        {label}
+      </p>
+      <p className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-ink">
+        {value}
+      </p>
     </div>
   );
 }

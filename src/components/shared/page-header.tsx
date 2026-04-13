@@ -48,7 +48,9 @@ export function PageHeader({
           ) : null}
         </div>
 
-        {actions ? <div className="flex shrink-0 flex-wrap gap-3">{actions}</div> : null}
+        {actions ? (
+          <div className="flex shrink-0 flex-wrap gap-3">{actions}</div>
+        ) : null}
       </div>
 
       {children ? <div className="mt-6">{children}</div> : null}

@@ -1,18 +1,22 @@
 import path from "node:path";
 
+import { runAgent, type AgentConfig } from "../../agent/index.ts";
 import { readWorksheetFromWorkbook } from "./xlsx.ts";
+import { buildAgentInputFromCase2Dataset } from "./agent-input.ts";
 import {
   CASE2_SOURCE_COLUMNS,
   type Case2AggregateBase,
   type Case2Aggregates,
+  type Case2BuildOptions,
   type Case2BenchmarkMetricComparison,
   type Case2BenchmarkMetricKey,
   type Case2BenchmarkMetricSummary,
   type Case2BenchmarkResult,
-  type Case2BuildOptions,
   type Case2DatasetResult,
+  type Case2FlagCategory,
   type Case2FlagSeverity,
   type Case2InternalField,
+  type Case2MismatchCategory,
   type Case2NamedAggregate,
   type Case2ParsedRow,
   type Case2QualityFlag,
@@ -23,8 +27,24 @@ import {
   type PeerGroupType,
   type RiskTrafficLightNormalized,
 } from "./types.ts";
+import type { AgentInput } from "../../agent/contracts/agent-input.ts";
+import type { AgentResult } from "../../agent/contracts/agent-output.ts";
 
 export * from "./types.ts";
+export * from "./agent-input.ts";
+export * from "./output.ts";
+export * from "./adapters/index.ts";
+
+export type Case2AgentBundleOptions = Case2BuildOptions & {
+  agentConfigOverrides?: Partial<AgentConfig>;
+  generatedAt?: string;
+};
+
+export type Case2AgentBundle = {
+  dataset: Case2DatasetResult;
+  input: AgentInput;
+  result: AgentResult;
+};
 
 const DEFAULT_WORKBOOK_PATH = path.join(
   process.cwd(),
@@ -32,7 +52,10 @@ const DEFAULT_WORKBOOK_PATH = path.join(
   "Rappi_AI_Builder_Challenge_Dataset.xlsx",
 );
 const DEFAULT_SHEET_NAME = "Caso2_Restaurantes";
-const EPSILON = 0.011;
+const DELTA_RATING_TOLERANCE = 0.05;
+const VAR_ORDENES_PCT_TOLERANCE = 0.5;
+const REFERENCE_DATE_INTERPRETATION =
+  "ageDaysRecalc is computed against the dataset internal cutoff date, not the system clock. This dataset is interpreted as an operational snapshot with a future/internal reference date.";
 
 const BENCHMARK_METRICS: Case2BenchmarkMetricKey[] = [
   "currentRating",
@@ -125,11 +148,15 @@ function average(values: Array<number | null>): number | null {
     return null;
   }
 
-  return roundTo(filtered.reduce((sum, value) => sum + value, 0) / filtered.length);
+  return roundTo(
+    filtered.reduce((sum, value) => sum + value, 0) / filtered.length,
+  );
 }
 
 function median(values: Array<number | null>): number | null {
-  const filtered = values.filter((value): value is number => value !== null).sort((a, b) => a - b);
+  const filtered = values
+    .filter((value): value is number => value !== null)
+    .sort((a, b) => a - b);
   if (!filtered.length) {
     return null;
   }
@@ -142,8 +169,12 @@ function median(values: Array<number | null>): number | null {
   return roundTo(filtered[midpoint]);
 }
 
-function numericSummary(values: Array<number | null>): Case2BenchmarkMetricSummary {
-  const filtered = values.filter((value): value is number => value !== null).sort((a, b) => a - b);
+function numericSummary(
+  values: Array<number | null>,
+): Case2BenchmarkMetricSummary {
+  const filtered = values
+    .filter((value): value is number => value !== null)
+    .sort((a, b) => a - b);
   return {
     count: filtered.length,
     mean: average(filtered),
@@ -169,18 +200,141 @@ function emptyRiskDistribution(): Record<RiskTrafficLightNormalized, number> {
   };
 }
 
+function emptyFlagCountsByCategory(): Record<Case2FlagCategory, number> {
+  return {
+    reconciliation: 0,
+    benchmark_coverage: 0,
+    temporal_date: 0,
+    validation_range: 0,
+  };
+}
+
+function emptyMismatchCounts(): Record<Case2MismatchCategory, number> {
+  return {
+    rounding_or_precision: 0,
+    materially_different_formula: 0,
+    percentage_convention: 0,
+    outlier_original_derived: 0,
+    not_applicable: 0,
+  };
+}
+
 function pushFlag(
   flags: Case2QualityFlag[],
   code: Case2QualityFlagCode,
+  category: Case2FlagCategory,
   severity: Case2FlagSeverity,
   message: string,
   field?: Case2QualityFlag["field"],
 ): void {
-  flags.push({ code, severity, message, field });
+  flags.push({ code, category, severity, message, field });
+}
+
+function buildFlagsByCategory(
+  flags: Case2QualityFlag[],
+): Record<Case2FlagCategory, Case2QualityFlag[]> {
+  return {
+    reconciliation: flags.filter((flag) => flag.category === "reconciliation"),
+    benchmark_coverage: flags.filter(
+      (flag) => flag.category === "benchmark_coverage",
+    ),
+    temporal_date: flags.filter((flag) => flag.category === "temporal_date"),
+    validation_range: flags.filter(
+      (flag) => flag.category === "validation_range",
+    ),
+  };
+}
+
+function getReconciliationStatus(
+  originalValue: number | null,
+  recalculatedValue: number | null,
+  tolerance: number,
+): "exact_match" | "approximate_match" | "mismatch" | "not_applicable" {
+  if (originalValue === null || recalculatedValue === null) {
+    return "not_applicable";
+  }
+
+  const difference = Math.abs(originalValue - recalculatedValue);
+  if (difference === 0) {
+    return "exact_match";
+  }
+
+  if (difference <= tolerance) {
+    return "approximate_match";
+  }
+
+  return "mismatch";
+}
+
+function classifyDeltaMismatch(
+  originalValue: number | null,
+  recalculatedValue: number | null,
+): Case2MismatchCategory {
+  const difference =
+    originalValue !== null && recalculatedValue !== null
+      ? Math.abs(originalValue - recalculatedValue)
+      : null;
+
+  if (difference === null || difference <= DELTA_RATING_TOLERANCE) {
+    return "not_applicable";
+  }
+
+  if (difference >= 0.1) {
+    return "outlier_original_derived";
+  }
+
+  if (difference > 0.05) {
+    return "materially_different_formula";
+  }
+
+  return "rounding_or_precision";
+}
+
+function classifyVarOrdenesPctMismatch(
+  row: Pick<
+    Case2ParsedRow,
+    "orders7d" | "orders7dPrevious" | "ordersVariancePctOriginal" | "metrics"
+  >,
+): Case2MismatchCategory {
+  const originalValue = row.ordersVariancePctOriginal;
+  const recalculatedValue = row.metrics.varOrdenesPctRecalc;
+  const difference =
+    originalValue !== null && recalculatedValue !== null
+      ? Math.abs(originalValue - recalculatedValue)
+      : null;
+
+  if (difference === null || difference <= VAR_ORDENES_PCT_TOLERANCE) {
+    return "not_applicable";
+  }
+
+  if (row.orders7dPrevious === 0) {
+    return "percentage_convention";
+  }
+
+  if (
+    originalValue !== null &&
+    recalculatedValue !== null &&
+    Math.sign(originalValue) !== Math.sign(recalculatedValue)
+  ) {
+    return "percentage_convention";
+  }
+
+  if (difference > 2) {
+    return "outlier_original_derived";
+  }
+
+  if (difference > 0.5) {
+    return "materially_different_formula";
+  }
+
+  return "rounding_or_precision";
 }
 
 function normalizeRiskLabel(value: string): RiskTrafficLightNormalized {
-  const normalized = value.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+  const normalized = value
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase();
 
   if (normalized.includes("estable")) {
     return "stable";
@@ -209,7 +363,14 @@ function validateRange(
   }
 
   if (value < min || value > max) {
-    pushFlag(flags, "out_of_range", "error", `${field} is outside the expected range.`, field);
+    pushFlag(
+      flags,
+      "out_of_range",
+      "validation_range",
+      "error",
+      `${field} is outside the expected range.`,
+      field,
+    );
   }
 }
 
@@ -224,7 +385,14 @@ function validateInteger(
   }
 
   if (!Number.isInteger(parsed)) {
-    pushFlag(flags, "invalid_integer", "warning", `${field} should be an integer value.`, field);
+    pushFlag(
+      flags,
+      "invalid_integer",
+      "validation_range",
+      "warning",
+      `${field} should be an integer value.`,
+      field,
+    );
   }
 }
 
@@ -256,8 +424,12 @@ function buildBaseRow(raw: Case2RawRow, rowNumber: number): Case2ParsedRow {
   const npsScore = parseNumber(raw.nps_score);
   const avgTicketMxn = parseNumber(raw.valor_ticket_prom_mxn);
   const activeSince = parseIsoDate(raw.activo_desde);
-  const riskTrafficLightNormalized = normalizeRiskLabel(riskTrafficLightOriginal);
-  const numericRawValues: Array<[Case2InternalField, string | number | null, number | null]> = [
+  const riskTrafficLightNormalized = normalizeRiskLabel(
+    riskTrafficLightOriginal,
+  );
+  const numericRawValues: Array<
+    [Case2InternalField, string | number | null, number | null]
+  > = [
     ["currentRating", raw.rating_actual, currentRating],
     ["rating30dAvg", raw.rating_prom_30d, rating30dAvg],
     ["deltaRatingOriginal", raw.delta_rating, deltaRatingOriginal],
@@ -265,7 +437,11 @@ function buildBaseRow(raw: Case2RawRow, rowNumber: number): Case2ParsedRow {
     ["avgDeliveryTimeMin", raw.tiempo_entrega_avg_min, avgDeliveryTimeMin],
     ["orders7d", raw.ordenes_7d, orders7d],
     ["orders7dPrevious", raw.ordenes_7d_anterior, orders7dPrevious],
-    ["ordersVariancePctOriginal", raw.var_ordenes_pct, ordersVariancePctOriginal],
+    [
+      "ordersVariancePctOriginal",
+      raw.var_ordenes_pct,
+      ordersVariancePctOriginal,
+    ],
     ["complaints7d", raw.quejas_7d, complaints7d],
     ["npsScore", raw.nps_score, npsScore],
     ["avgTicketMxn", raw.valor_ticket_prom_mxn, avgTicketMxn],
@@ -281,7 +457,14 @@ function buildBaseRow(raw: Case2RawRow, rowNumber: number): Case2ParsedRow {
 
   for (const [field, value] of requiredStrings) {
     if (!value) {
-      pushFlag(flags, "missing_required_value", "error", `${field} is required.`, field);
+      pushFlag(
+        flags,
+        "missing_required_value",
+        "validation_range",
+        "error",
+        `${field} is required.`,
+        field,
+      );
     }
   }
 
@@ -299,24 +482,46 @@ function buildBaseRow(raw: Case2RawRow, rowNumber: number): Case2ParsedRow {
 
   for (const [field, value] of requiredNumbers) {
     if (value === null) {
-      pushFlag(flags, "missing_required_value", "error", `${field} is required.`, field);
+      pushFlag(
+        flags,
+        "missing_required_value",
+        "validation_range",
+        "error",
+        `${field} is required.`,
+        field,
+      );
     }
   }
 
   for (const [field, rawValue, parsedValue] of numericRawValues) {
     if (toTrimmedString(rawValue) && parsedValue === null) {
-      pushFlag(flags, "invalid_number", "error", `${field} must be numeric.`, field);
+      pushFlag(
+        flags,
+        "invalid_number",
+        "validation_range",
+        "error",
+        `${field} must be numeric.`,
+        field,
+      );
     }
   }
 
   if (toTrimmedString(raw.activo_desde) && !activeSince) {
-    pushFlag(flags, "invalid_date", "error", "activeSince must be a valid ISO date.", "activeSince");
+    pushFlag(
+      flags,
+      "invalid_date",
+      "temporal_date",
+      "error",
+      "activeSince must be a valid ISO date.",
+      "activeSince",
+    );
   }
 
   if (riskTrafficLightOriginal && riskTrafficLightNormalized === "unknown") {
     pushFlag(
       flags,
       "risk_label_unrecognized",
+      "validation_range",
       "warning",
       "riskTrafficLightOriginal could not be normalized.",
       "riskTrafficLightOriginal",
@@ -366,11 +571,31 @@ function buildBaseRow(raw: Case2RawRow, rowNumber: number): Case2ParsedRow {
       gmvProxy7d: null,
     },
     flags,
+    flagsByCategory: buildFlagsByCategory(flags),
+    reconciliation: {
+      tolerances: {
+        deltaRating: DELTA_RATING_TOLERANCE,
+        varOrdenesPct: VAR_ORDENES_PCT_TOLERANCE,
+      },
+      deltaRating: {
+        difference: null,
+        status: "not_applicable",
+        category: "not_applicable",
+      },
+      varOrdenesPct: {
+        difference: null,
+        status: "not_applicable",
+        category: "not_applicable",
+      },
+    },
     benchmark: null,
   };
 }
 
-function deriveReferenceDate(rows: Case2ParsedRow[], explicitReferenceDate?: string): {
+function deriveReferenceDate(
+  rows: Case2ParsedRow[],
+  explicitReferenceDate?: string,
+): {
   referenceDate: string;
   source: "option" | "max_active_since";
 } {
@@ -387,7 +612,9 @@ function deriveReferenceDate(rows: Case2ParsedRow[], explicitReferenceDate?: str
     .sort();
 
   if (!validDates.length) {
-    throw new Error("Unable to derive a reference date because activo_desde is missing.");
+    throw new Error(
+      "Unable to derive a reference date because activo_desde is missing.",
+    );
   }
 
   return {
@@ -396,7 +623,10 @@ function deriveReferenceDate(rows: Case2ParsedRow[], explicitReferenceDate?: str
   };
 }
 
-function applyRecalculations(rows: Case2ParsedRow[], referenceDate: string): void {
+function applyRecalculations(
+  rows: Case2ParsedRow[],
+  referenceDate: string,
+): void {
   for (const row of rows) {
     row.metrics.deltaRatingRecalc =
       row.currentRating !== null && row.rating30dAvg !== null
@@ -411,6 +641,7 @@ function applyRecalculations(rows: Case2ParsedRow[], referenceDate: string): voi
         pushFlag(
           row.flags,
           "var_ordenes_pct_requires_fallback",
+          "reconciliation",
           "warning",
           "orders variance cannot be recalculated with a zero previous baseline.",
           "ordersVariancePctOriginal",
@@ -423,39 +654,72 @@ function applyRecalculations(rows: Case2ParsedRow[], referenceDate: string): voi
     }
 
     row.metrics.ageDaysRecalc =
-      row.activeSince !== null ? daysBetween(row.activeSince, referenceDate) : null;
+      row.activeSince !== null
+        ? daysBetween(row.activeSince, referenceDate)
+        : null;
     row.metrics.gmvProxy7d =
       row.orders7d !== null && row.avgTicketMxn !== null
         ? roundTo(row.orders7d * row.avgTicketMxn)
         : null;
 
-    if (
-      row.deltaRatingOriginal !== null &&
-      row.metrics.deltaRatingRecalc !== null &&
-      Math.abs(row.deltaRatingOriginal - row.metrics.deltaRatingRecalc) > EPSILON
-    ) {
+    row.reconciliation.deltaRating.difference =
+      row.deltaRatingOriginal !== null && row.metrics.deltaRatingRecalc !== null
+        ? roundTo(
+            Math.abs(row.deltaRatingOriginal - row.metrics.deltaRatingRecalc),
+            4,
+          )
+        : null;
+    row.reconciliation.deltaRating.status = getReconciliationStatus(
+      row.deltaRatingOriginal,
+      row.metrics.deltaRatingRecalc,
+      DELTA_RATING_TOLERANCE,
+    );
+    row.reconciliation.deltaRating.category = classifyDeltaMismatch(
+      row.deltaRatingOriginal,
+      row.metrics.deltaRatingRecalc,
+    );
+
+    row.reconciliation.varOrdenesPct.difference =
+      row.ordersVariancePctOriginal !== null &&
+      row.metrics.varOrdenesPctRecalc !== null
+        ? roundTo(
+            Math.abs(
+              row.ordersVariancePctOriginal - row.metrics.varOrdenesPctRecalc,
+            ),
+            4,
+          )
+        : null;
+    row.reconciliation.varOrdenesPct.status = getReconciliationStatus(
+      row.ordersVariancePctOriginal,
+      row.metrics.varOrdenesPctRecalc,
+      VAR_ORDENES_PCT_TOLERANCE,
+    );
+    row.reconciliation.varOrdenesPct.category =
+      classifyVarOrdenesPctMismatch(row);
+
+    if (row.reconciliation.deltaRating.status === "mismatch") {
       pushFlag(
         row.flags,
         "delta_rating_mismatch",
+        "reconciliation",
         "warning",
         "Original delta_rating differs from the official recalculation.",
         "deltaRatingOriginal",
       );
     }
 
-    if (
-      row.ordersVariancePctOriginal !== null &&
-      row.metrics.varOrdenesPctRecalc !== null &&
-      Math.abs(row.ordersVariancePctOriginal - row.metrics.varOrdenesPctRecalc) > 0.11
-    ) {
+    if (row.reconciliation.varOrdenesPct.status === "mismatch") {
       pushFlag(
         row.flags,
         "var_ordenes_pct_mismatch",
+        "reconciliation",
         "warning",
         "Original var_ordenes_pct differs from the official recalculation.",
         "ordersVariancePctOriginal",
       );
     }
+
+    row.flagsByCategory = buildFlagsByCategory(row.flags);
   }
 }
 
@@ -480,17 +744,22 @@ function addDuplicateFlags(rows: Case2ParsedRow[]): string[] {
       pushFlag(
         row.flags,
         "duplicate_restaurant_id",
+        "validation_range",
         "error",
         "restaurantId must be unique within the dataset.",
         "restaurantId",
       );
+      row.flagsByCategory = buildFlagsByCategory(row.flags);
     }
   }
 
   return [...duplicates].sort();
 }
 
-function getMetricValue(row: Case2ParsedRow, metric: Case2BenchmarkMetricKey): number | null {
+function getMetricValue(
+  row: Case2ParsedRow,
+  metric: Case2BenchmarkMetricKey,
+): number | null {
   switch (metric) {
     case "currentRating":
       return row.currentRating;
@@ -526,11 +795,18 @@ function peerGroupLabel(type: PeerGroupType, row: Case2ParsedRow): string {
   }
 }
 
-function buildBenchmark(rows: Case2ParsedRow[], row: Case2ParsedRow): Case2BenchmarkResult {
-  const strategies: Array<{ type: PeerGroupType; filter: (candidate: Case2ParsedRow) => boolean }> = [
+function buildBenchmark(
+  rows: Case2ParsedRow[],
+  row: Case2ParsedRow,
+): Case2BenchmarkResult {
+  const strategies: Array<{
+    type: PeerGroupType;
+    filter: (candidate: Case2ParsedRow) => boolean;
+  }> = [
     {
       type: "city_vertical",
-      filter: (candidate) => candidate.city === row.city && candidate.vertical === row.vertical,
+      filter: (candidate) =>
+        candidate.city === row.city && candidate.vertical === row.vertical,
     },
     {
       type: "vertical",
@@ -568,11 +844,14 @@ function buildBenchmark(rows: Case2ParsedRow[], row: Case2ParsedRow): Case2Bench
   }
 
   const peerCount = selectedRows.length;
-  const reliability: PeerGroupReliability = peerCount >= 8 ? "reliable" : "caution";
+  const reliability: PeerGroupReliability =
+    peerCount >= 8 ? "reliable" : "caution";
   const metrics = Object.fromEntries(
     BENCHMARK_METRICS.map((metric) => [
       metric,
-      numericSummary(selectedRows.map((candidate) => getMetricValue(candidate, metric))),
+      numericSummary(
+        selectedRows.map((candidate) => getMetricValue(candidate, metric)),
+      ),
     ]),
   ) as Record<Case2BenchmarkMetricKey, Case2BenchmarkMetricSummary>;
 
@@ -583,8 +862,13 @@ function buildBenchmark(rows: Case2ParsedRow[], row: Case2ParsedRow): Case2Bench
       const comparison: Case2BenchmarkMetricComparison = {
         value,
         deltaToMedian:
-          value !== null && summary.median !== null ? roundTo(value - summary.median) : null,
-        deltaToMean: value !== null && summary.mean !== null ? roundTo(value - summary.mean) : null,
+          value !== null && summary.median !== null
+            ? roundTo(value - summary.median)
+            : null,
+        deltaToMean:
+          value !== null && summary.mean !== null
+            ? roundTo(value - summary.mean)
+            : null,
       };
       return [metric, comparison];
     }),
@@ -616,6 +900,7 @@ function attachBenchmarks(rows: Case2ParsedRow[]): void {
       pushFlag(
         row.flags,
         "benchmark_fallback_applied",
+        "benchmark_coverage",
         "info",
         `Benchmark peer group fell back to ${benchmark.peerGroupType}.`,
         "benchmark",
@@ -626,15 +911,22 @@ function attachBenchmarks(rows: Case2ParsedRow[]): void {
       pushFlag(
         row.flags,
         "benchmark_group_small",
+        "benchmark_coverage",
         "info",
         "Benchmark peer group is usable with caution because peer count is below 8.",
         "benchmark",
       );
     }
+
+    row.flagsByCategory = buildFlagsByCategory(row.flags);
   }
 }
 
-function aggregateGroup(rows: Case2ParsedRow[], key: string, name: string): Case2NamedAggregate {
+function aggregateGroup(
+  rows: Case2ParsedRow[],
+  key: string,
+  name: string,
+): Case2NamedAggregate {
   const flagCounts = emptyFlagCounts();
   const riskLabelDistribution = emptyRiskDistribution();
 
@@ -650,16 +942,25 @@ function aggregateGroup(rows: Case2ParsedRow[], key: string, name: string): Case
     distinctRestaurants: new Set(rows.map((row) => row.restaurantId)).size,
     sums: {
       orders7d: rows.reduce((sum, row) => sum + (row.orders7d ?? 0), 0),
-      orders7dPrevious: rows.reduce((sum, row) => sum + (row.orders7dPrevious ?? 0), 0),
+      orders7dPrevious: rows.reduce(
+        (sum, row) => sum + (row.orders7dPrevious ?? 0),
+        0,
+      ),
       complaints7d: rows.reduce((sum, row) => sum + (row.complaints7d ?? 0), 0),
-      gmvProxy7d: roundTo(rows.reduce((sum, row) => sum + (row.metrics.gmvProxy7d ?? 0), 0), 2) ?? 0,
+      gmvProxy7d:
+        roundTo(
+          rows.reduce((sum, row) => sum + (row.metrics.gmvProxy7d ?? 0), 0),
+          2,
+        ) ?? 0,
     },
     averages: {
       currentRating: average(rows.map((row) => row.currentRating)),
       rating30dAvg: average(rows.map((row) => row.rating30dAvg)),
       cancellationRatePct: average(rows.map((row) => row.cancellationRatePct)),
       avgDeliveryTimeMin: average(rows.map((row) => row.avgDeliveryTimeMin)),
-      ordersVariancePctRecalc: average(rows.map((row) => row.metrics.varOrdenesPctRecalc)),
+      ordersVariancePctRecalc: average(
+        rows.map((row) => row.metrics.varOrdenesPctRecalc),
+      ),
       npsScore: average(rows.map((row) => row.npsScore)),
       avgTicketMxn: average(rows.map((row) => row.avgTicketMxn)),
       ageDaysRecalc: average(rows.map((row) => row.metrics.ageDaysRecalc)),
@@ -690,16 +991,34 @@ function buildNamedAggregates(
   }
 
   return [...grouped.entries()]
-    .map(([key, groupRows]) => aggregateGroup(groupRows, key, nameSelector(groupRows[0])))
+    .map(([key, groupRows]) =>
+      aggregateGroup(groupRows, key, nameSelector(groupRows[0])),
+    )
     .sort((left, right) => left.name.localeCompare(right.name));
 }
 
 function buildAggregates(rows: Case2ParsedRow[]): Case2Aggregates {
   return {
-    restaurants: buildNamedAggregates(rows, (row) => row.restaurantId, (row) => row.restaurantName),
-    kams: buildNamedAggregates(rows, (row) => row.kamAssigned, (row) => row.kamAssigned),
-    cities: buildNamedAggregates(rows, (row) => row.city, (row) => row.city),
-    verticals: buildNamedAggregates(rows, (row) => row.vertical, (row) => row.vertical),
+    restaurants: buildNamedAggregates(
+      rows,
+      (row) => row.restaurantId,
+      (row) => row.restaurantName,
+    ),
+    kams: buildNamedAggregates(
+      rows,
+      (row) => row.kamAssigned,
+      (row) => row.kamAssigned,
+    ),
+    cities: buildNamedAggregates(
+      rows,
+      (row) => row.city,
+      (row) => row.city,
+    ),
+    verticals: buildNamedAggregates(
+      rows,
+      (row) => row.vertical,
+      (row) => row.vertical,
+    ),
   };
 }
 
@@ -712,7 +1031,10 @@ function buildSummary(
   sourceSheetName: string,
 ): Case2DatasetResult["summary"] {
   const flagCounts = emptyFlagCounts();
+  const flagCountsByCategory = emptyFlagCountsByCategory();
   const nullFieldCounts: Partial<Record<Case2InternalField, number>> = {};
+  const deltaMismatchSummary = emptyMismatchCounts();
+  const varMismatchSummary = emptyMismatchCounts();
 
   const nullableFields: Case2InternalField[] = [
     "currentRating",
@@ -732,7 +1054,11 @@ function buildSummary(
   for (const row of rows) {
     for (const flag of row.flags) {
       flagCounts[flag.code] += 1;
+      flagCountsByCategory[flag.category] += 1;
     }
+
+    deltaMismatchSummary[row.reconciliation.deltaRating.category] += 1;
+    varMismatchSummary[row.reconciliation.varOrdenesPct.category] += 1;
 
     for (const field of nullableFields) {
       const value = row[field];
@@ -744,16 +1070,50 @@ function buildSummary(
 
   return {
     totalRows: rows.length,
-    validRows: rows.filter((row) => !row.flags.some((flag) => flag.severity === "error")).length,
+    validRows: rows.filter(
+      (row) => !row.flags.some((flag) => flag.severity === "error"),
+    ).length,
     rowsWithFlags: rows.filter((row) => row.flags.length > 0).length,
-    rowsWithErrors: rows.filter((row) => row.flags.some((flag) => flag.severity === "error")).length,
+    rowsWithErrors: rows.filter((row) =>
+      row.flags.some((flag) => flag.severity === "error"),
+    ).length,
+    rowsUnchanged: rows.filter(
+      (row) =>
+        row.reconciliation.deltaRating.status === "exact_match" &&
+        row.reconciliation.varOrdenesPct.status === "exact_match",
+    ).length,
+    rowsRecalculated: rows.filter(
+      (row) =>
+        row.metrics.deltaRatingRecalc !== null ||
+        row.metrics.varOrdenesPctRecalc !== null ||
+        row.metrics.ageDaysRecalc !== null ||
+        row.metrics.gmvProxy7d !== null,
+    ).length,
     duplicateRestaurantIds: duplicates,
     referenceDate,
+    referenceDateUsed: referenceDate,
     referenceDateSource,
+    referenceDateInterpretation: REFERENCE_DATE_INTERPRETATION,
     headerRowNumber,
     sourceSheetName,
     flagCounts,
+    flagCountsByCategory,
     nullFieldCounts,
+    deltaRatingMismatchCount: flagCounts.delta_rating_mismatch,
+    varOrdenesPctMismatchCount: flagCounts.var_ordenes_pct_mismatch,
+    benchmarkReliableCount: rows.filter(
+      (row) => row.benchmark?.reliability === "reliable",
+    ).length,
+    benchmarkCautionCount: rows.filter(
+      (row) => row.benchmark?.reliability === "caution",
+    ).length,
+    benchmarkFallbackCount: rows.filter(
+      (row) => (row.benchmark?.fallbackDepth ?? 0) > 0,
+    ).length,
+    mismatchSummary: {
+      deltaRating: deltaMismatchSummary,
+      varOrdenesPct: varMismatchSummary,
+    },
   };
 }
 
@@ -767,7 +1127,10 @@ export function buildCase2RestaurantDataset(
   const rows = worksheet.rows.map((sourceRow, index) =>
     buildBaseRow(buildRawRow(sourceRow), worksheet.headerRowNumber + index + 1),
   );
-  const { referenceDate, source } = deriveReferenceDate(rows, options.referenceDate);
+  const { referenceDate, source } = deriveReferenceDate(
+    rows,
+    options.referenceDate,
+  );
 
   applyRecalculations(rows, referenceDate);
   const duplicates = addDuplicateFlags(rows);
@@ -779,6 +1142,9 @@ export function buildCase2RestaurantDataset(
       worksheetTitle: worksheet.title,
       headerRowNumber: worksheet.headerRowNumber,
       totalSourceRows: worksheet.rows.length,
+      referenceDateUsed: referenceDate,
+      referenceDateSource: source,
+      referenceDateInterpretation: REFERENCE_DATE_INTERPRETATION,
     },
     summary: buildSummary(
       rows,
@@ -790,5 +1156,19 @@ export function buildCase2RestaurantDataset(
     ),
     rows,
     aggregates: buildAggregates(rows),
+  };
+}
+
+export function buildCase2AgentBundle(
+  options: Case2AgentBundleOptions = {},
+): Case2AgentBundle {
+  const dataset = buildCase2RestaurantDataset(options);
+  const input = buildAgentInputFromCase2Dataset(dataset, options.generatedAt);
+  const result = runAgent(input, options.agentConfigOverrides);
+
+  return {
+    dataset,
+    input,
+    result,
   };
 }

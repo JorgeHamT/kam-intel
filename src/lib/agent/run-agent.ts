@@ -3,11 +3,21 @@ import { aggregateKamAssessment } from "./aggregation/aggregate-kam-assessment.t
 import { aggregateRestaurantAssessment } from "./aggregation/aggregate-restaurant-assessment.ts";
 import { buildAlertFeed } from "./aggregation/build-alert-feed.ts";
 import { createAgentConfig, type AgentConfig } from "./config/index.ts";
-import type { AgentInput, KamMetricsInput, RestaurantMetricsInput } from "./contracts/agent-input.ts";
-import type { AgentResult, PortfolioAssessment, RestaurantAssessment } from "./contracts/agent-output.ts";
+import type {
+  AgentInput,
+  KamMetricsInput,
+  RestaurantMetricsInput,
+} from "./contracts/agent-input.ts";
+import type {
+  AgentResult,
+  PortfolioAssessment,
+  RestaurantAssessment,
+} from "./contracts/agent-output.ts";
 import { average } from "./helpers/scoring-utils.ts";
 
-function groupByKam(restaurants: RestaurantMetricsInput[]): Map<string, RestaurantMetricsInput[]> {
+function groupByKam(
+  restaurants: RestaurantMetricsInput[],
+): Map<string, RestaurantMetricsInput[]> {
   const result = new Map<string, RestaurantMetricsInput[]>();
 
   for (const restaurant of restaurants) {
@@ -19,7 +29,9 @@ function groupByKam(restaurants: RestaurantMetricsInput[]): Map<string, Restaura
   return result;
 }
 
-function mapKamMetadata(kams: KamMetricsInput[] | undefined): Map<string, KamMetricsInput> {
+function mapKamMetadata(
+  kams: KamMetricsInput[] | undefined,
+): Map<string, KamMetricsInput> {
   return new Map((kams ?? []).map((kam) => [kam.kamId, kam]));
 }
 
@@ -46,25 +58,38 @@ export function runAgent(
       (acc, current) => acc + (current.gmvProxy7d ?? 0),
       0,
     );
-    const concentrationShare = kamPortfolioGmv7d > 0
-      ? (restaurant.gmvProxy7d ?? 0) / kamPortfolioGmv7d
-      : 0;
-    const { assessment, validationOverlay } = aggregateRestaurantAssessment(restaurant, config, {
-      kamPortfolioGmv7d,
-      concentrationShare,
-    });
+    const concentrationShare =
+      kamPortfolioGmv7d > 0
+        ? (restaurant.gmvProxy7d ?? 0) / kamPortfolioGmv7d
+        : 0;
+    const { assessment, validationOverlay } = aggregateRestaurantAssessment(
+      restaurant,
+      config,
+      {
+        kamPortfolioGmv7d,
+        concentrationShare,
+      },
+    );
 
     restaurantAssessments.push(assessment);
     validationOverlays.push(validationOverlay);
   }
 
   const kamAssessments = [...restaurantsByKam.entries()].map(([kamId]) => {
-    const kamRestaurants = restaurantAssessments.filter((assessment) => assessment.kamId === kamId);
-    return aggregateKamAssessment(kamMetadata.get(kamId), kamRestaurants, config);
+    const kamRestaurants = restaurantAssessments.filter(
+      (assessment) => assessment.kamId === kamId,
+    );
+    return aggregateKamAssessment(
+      kamMetadata.get(kamId),
+      kamRestaurants,
+      config,
+    );
   });
 
   const portfolio: PortfolioAssessment = {
-    portfolioStatus: kamAssessments.some((kam) => kam.portfolioStatus === "critical")
+    portfolioStatus: kamAssessments.some(
+      (kam) => kam.portfolioStatus === "critical",
+    )
       ? "critical"
       : kamAssessments.some((kam) => kam.portfolioStatus === "under_pressure")
         ? "under_pressure"
@@ -72,9 +97,11 @@ export function runAgent(
     totalRestaurants: restaurantAssessments.length,
     totalKams: kamAssessments.length,
     concentrationRiskCount: restaurantAssessments.filter((restaurant) =>
-      restaurant.signals.some((signal) => signal.type === "concentration_risk")
+      restaurant.signals.some((signal) => signal.type === "concentration_risk"),
     ).length,
-    averagePriorityScore: average(restaurantAssessments.map((restaurant) => restaurant.priorityScore)),
+    averagePriorityScore: average(
+      restaurantAssessments.map((restaurant) => restaurant.priorityScore),
+    ),
     highestPriorityRestaurants: restaurantAssessments
       .sort((left, right) => right.priorityScore - left.priorityScore)
       .slice(0, 5)

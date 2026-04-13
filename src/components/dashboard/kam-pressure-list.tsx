@@ -24,22 +24,30 @@ export function KamPressureList({ items }: KamPressureListProps) {
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
-                  <h3 className="text-base font-semibold text-ink">{item.name}</h3>
+                  <h3 className="text-base font-semibold text-ink">
+                    {item.name}
+                  </h3>
                   <StatusBadge label={item.pressureLabel} tone="warning" />
                 </div>
-                <p className="text-sm font-medium text-slate-700">{item.segment}</p>
+                <p className="text-sm font-medium text-slate-700">
+                  {item.segment}
+                </p>
                 <div className="grid gap-3 md:grid-cols-2">
                   <div className="rounded-2xl border border-white bg-white p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
                       Presión operativa
                     </p>
-                    <p className="mt-2 text-sm leading-6 text-slate-700">{item.focus}</p>
+                    <p className="mt-2 text-sm leading-6 text-slate-700">
+                      {item.focus}
+                    </p>
                   </div>
                   <div className="rounded-2xl border border-white bg-white p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
                       Siguiente paso
                     </p>
-                    <p className="mt-2 text-sm leading-6 text-slate-700">{item.nextStep}</p>
+                    <p className="mt-2 text-sm leading-6 text-slate-700">
+                      {item.nextStep}
+                    </p>
                   </div>
                 </div>
               </div>

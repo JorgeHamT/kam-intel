@@ -69,12 +69,26 @@ export type Case2QualityFlagCode =
 
 export type Case2FlagSeverity = "info" | "warning" | "error";
 
+export type Case2FlagCategory =
+  | "reconciliation"
+  | "benchmark_coverage"
+  | "temporal_date"
+  | "validation_range";
+
 export type Case2QualityFlag = {
   code: Case2QualityFlagCode;
+  category: Case2FlagCategory;
   severity: Case2FlagSeverity;
   field?: Case2InternalField | Case2SourceColumn | "benchmark";
   message: string;
 };
+
+export type Case2MismatchCategory =
+  | "rounding_or_precision"
+  | "materially_different_formula"
+  | "percentage_convention"
+  | "outlier_original_derived"
+  | "not_applicable";
 
 export type Case2RowMetrics = {
   deltaRatingRecalc: number | null;
@@ -143,6 +157,31 @@ export type Case2ParsedRow = {
   riskTrafficLightNormalized: RiskTrafficLightNormalized;
   metrics: Case2RowMetrics;
   flags: Case2QualityFlag[];
+  flagsByCategory: Record<Case2FlagCategory, Case2QualityFlag[]>;
+  reconciliation: {
+    tolerances: {
+      deltaRating: number;
+      varOrdenesPct: number;
+    };
+    deltaRating: {
+      difference: number | null;
+      status:
+        | "exact_match"
+        | "approximate_match"
+        | "mismatch"
+        | "not_applicable";
+      category: Case2MismatchCategory;
+    };
+    varOrdenesPct: {
+      difference: number | null;
+      status:
+        | "exact_match"
+        | "approximate_match"
+        | "mismatch"
+        | "not_applicable";
+      category: Case2MismatchCategory;
+    };
+  };
   benchmark: Case2BenchmarkResult | null;
 };
 
@@ -151,13 +190,27 @@ export type Case2ValidationSummary = {
   validRows: number;
   rowsWithFlags: number;
   rowsWithErrors: number;
+  rowsUnchanged: number;
+  rowsRecalculated: number;
   duplicateRestaurantIds: string[];
   referenceDate: string;
+  referenceDateUsed: string;
   referenceDateSource: "option" | "max_active_since";
+  referenceDateInterpretation: string;
   headerRowNumber: number;
   sourceSheetName: string;
   flagCounts: Record<Case2QualityFlagCode, number>;
+  flagCountsByCategory: Record<Case2FlagCategory, number>;
   nullFieldCounts: Partial<Record<Case2InternalField, number>>;
+  deltaRatingMismatchCount: number;
+  varOrdenesPctMismatchCount: number;
+  benchmarkReliableCount: number;
+  benchmarkCautionCount: number;
+  benchmarkFallbackCount: number;
+  mismatchSummary: {
+    deltaRating: Record<Case2MismatchCategory, number>;
+    varOrdenesPct: Record<Case2MismatchCategory, number>;
+  };
 };
 
 export type Case2AggregateBase = {
@@ -201,6 +254,9 @@ export type Case2DatasetResult = {
     worksheetTitle: string | null;
     headerRowNumber: number;
     totalSourceRows: number;
+    referenceDateUsed: string;
+    referenceDateSource: "option" | "max_active_since";
+    referenceDateInterpretation: string;
   };
   summary: Case2ValidationSummary;
   rows: Case2ParsedRow[];

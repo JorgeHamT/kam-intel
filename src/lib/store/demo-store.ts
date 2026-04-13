@@ -3,11 +3,14 @@
 import { create } from "zustand";
 
 import { DEFAULT_SCENARIO_ID, DEMO_REFRESH_LABEL } from "@/lib/demo/scenarios";
+import { FALLBACK_ROUTE, OFFICIAL_ENTRY_ROUTE } from "@/lib/demo/options";
 import type { ScenarioId } from "@/types/domain";
 
 type DemoState = {
   scenario: ScenarioId;
   lastRefresh: string;
+  entryRoute: string;
+  fallbackRoute: string;
   setScenario: (scenario: ScenarioId) => void;
   resetDemo: () => void;
 };
@@ -15,6 +18,8 @@ type DemoState = {
 export const useDemoStore = create<DemoState>((set) => ({
   scenario: DEFAULT_SCENARIO_ID,
   lastRefresh: DEMO_REFRESH_LABEL,
+  entryRoute: OFFICIAL_ENTRY_ROUTE,
+  fallbackRoute: FALLBACK_ROUTE,
   setScenario: (scenario) =>
     set({
       scenario,
@@ -24,5 +29,7 @@ export const useDemoStore = create<DemoState>((set) => ({
     set({
       scenario: DEFAULT_SCENARIO_ID,
       lastRefresh: DEMO_REFRESH_LABEL,
+      entryRoute: OFFICIAL_ENTRY_ROUTE,
+      fallbackRoute: FALLBACK_ROUTE,
     }),
 }));

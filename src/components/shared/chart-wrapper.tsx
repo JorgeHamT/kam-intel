@@ -21,7 +21,9 @@ export function ChartWrapper({
         </p>
       ) : null}
       <h2 className="mt-2 text-xl font-semibold text-ink">{title}</h2>
-      {description ? <p className="mt-2 text-sm text-slate-600">{description}</p> : null}
+      {description ? (
+        <p className="mt-2 text-sm text-slate-600">{description}</p>
+      ) : null}
       <div className="mt-6">{children}</div>
     </section>
   );

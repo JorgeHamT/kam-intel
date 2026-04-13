@@ -15,7 +15,8 @@ export const topKpis: Kpi[] = [
     label: "Revenue en riesgo",
     value: "$2.4M",
     delta: "+12% vs. escenario base",
-    insight: "Mock controlado para ilustrar presión comercial sin fórmula final.",
+    insight:
+      "Mock controlado para ilustrar presión comercial sin fórmula final.",
     tone: "critical",
   },
   {
@@ -75,18 +76,25 @@ export const agentSignals: AgentSignal[] = [
   {
     id: "signal-01",
     title: "Caída coordinada en activación de restaurantes prioritarios",
-    detection: "El agente mock detectó 6 restaurantes con caída sostenida en un mismo bloque KAM.",
-    whyItMatters: "Podría escalar en revenue at risk si la tendencia coincide con campañas activas.",
-    recommendation: "Abrir revisión táctica de cobertura y validar integridad de inputs.",
-    nextStep: "Entrar a Alertas y asignar responsables antes del siguiente refresh.",
+    detection:
+      "El agente mock detectó 6 restaurantes con caída sostenida en un mismo bloque KAM.",
+    whyItMatters:
+      "Podría escalar en revenue at risk si la tendencia coincide con campañas activas.",
+    recommendation:
+      "Abrir revisión táctica de cobertura y validar integridad de inputs.",
+    nextStep:
+      "Entrar a Alertas y asignar responsables antes del siguiente refresh.",
     tone: "critical",
   },
   {
     id: "signal-02",
     title: "Brecha de dato en campos operativos críticos",
-    detection: "Se marcaron registros con campos de promo y owner desalineados.",
-    whyItMatters: "La priorización final del agente depende de que estos campos estén consistentes.",
-    recommendation: "Escalar a Validación de datos para cerrar reglas abiertas primero.",
+    detection:
+      "Se marcaron registros con campos de promo y owner desalineados.",
+    whyItMatters:
+      "La priorización final del agente depende de que estos campos estén consistentes.",
+    recommendation:
+      "Escalar a Validación de datos para cerrar reglas abiertas primero.",
     nextStep: "Revisar la cola de issues en Data Validation.",
     tone: "warning",
   },
@@ -154,7 +162,8 @@ export const restaurants: RestaurantRecord[] = [
     kamId: "maria-salgado",
     status: "Crítico",
     whyFlagged: "Disminución simultánea en activación y cobertura de owner.",
-    recommendation: "Validar insumo operativo y definir recuperación comercial.",
+    recommendation:
+      "Validar insumo operativo y definir recuperación comercial.",
   },
   {
     id: "taco-hub-monterrey",
@@ -162,7 +171,8 @@ export const restaurants: RestaurantRecord[] = [
     city: "Monterrey",
     kamId: "diego-rivera",
     status: "En riesgo",
-    whyFlagged: "Promoción activa con performance por debajo del patrón esperado.",
+    whyFlagged:
+      "Promoción activa con performance por debajo del patrón esperado.",
     recommendation: "Revisar ejecución promo y acciones del KAM.",
   },
   {
@@ -172,7 +182,8 @@ export const restaurants: RestaurantRecord[] = [
     kamId: "valeria-gomez",
     status: "Monitoreo",
     whyFlagged: "La narrativa depende de validar el input de coverage.",
-    recommendation: "Esperar limpieza de dato antes de escalar prioridad final.",
+    recommendation:
+      "Esperar limpieza de dato antes de escalar prioridad final.",
   },
 ];
 
@@ -219,7 +230,8 @@ export const deckSections: DeckSection[] = [
   {
     id: "deck-03",
     title: "Dependencias del motor",
-    objective: "Mostrar qué parte es mock y qué dependerá de cálculos oficiales.",
+    objective:
+      "Mostrar qué parte es mock y qué dependerá de cálculos oficiales.",
     status: "Visible para evitar sobreventa funcional",
   },
 ];

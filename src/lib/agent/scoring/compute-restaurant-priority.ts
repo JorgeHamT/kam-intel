@@ -1,6 +1,11 @@
 import type { AgentConfig } from "../config/index.ts";
 import type { RestaurantMetricsInput } from "../contracts/agent-input.ts";
-import type { ConfidenceOverlay, PriorityScore, ScoreBreakdown, Signal } from "../contracts/agent-output.ts";
+import type {
+  ConfidenceOverlay,
+  PriorityScore,
+  ScoreBreakdown,
+  Signal,
+} from "../contracts/agent-output.ts";
 import { clamp, round, sum } from "../helpers/scoring-utils.ts";
 import { createEmptyBreakdown } from "./score-breakdown.ts";
 
@@ -8,7 +13,11 @@ function statusToPoints(signal: Signal, config: AgentConfig): number {
   return config.weights.signalImpact[signal.severityHint];
 }
 
-function normalizeSection(rawPoints: number, sectionCap: number, sectionWeight: number): number {
+function normalizeSection(
+  rawPoints: number,
+  sectionCap: number,
+  sectionWeight: number,
+): number {
   if (rawPoints <= 0) {
     return 0;
   }
@@ -21,7 +30,11 @@ export function computeRestaurantPriority(
   signals: Signal[],
   confidenceOverlay: ConfidenceOverlay,
   config: AgentConfig,
-): { priorityScore: number; priority: PriorityScore; breakdown: ScoreBreakdown } {
+): {
+  priorityScore: number;
+  priority: PriorityScore;
+  breakdown: ScoreBreakdown;
+} {
   const breakdown = createEmptyBreakdown();
 
   for (const signal of signals) {
@@ -35,13 +48,19 @@ export function computeRestaurantPriority(
       continue;
     }
 
-    if (signal.type === "absolute_deterioration" || signal.type === "relative_deterioration") {
+    if (
+      signal.type === "absolute_deterioration" ||
+      signal.type === "relative_deterioration"
+    ) {
       breakdown.observedRisk.push({
         label: signal.label,
         value: points,
         reason: "Empeoramiento observado en la operación o frente a peers.",
       });
-    } else if (signal.type === "accelerated_deterioration" || signal.type === "compound_risk") {
+    } else if (
+      signal.type === "accelerated_deterioration" ||
+      signal.type === "compound_risk"
+    ) {
       breakdown.deteriorationMomentum.push({
         label: signal.label,
         value: points,
@@ -51,22 +70,26 @@ export function computeRestaurantPriority(
       breakdown.businessImpact.push({
         label: signal.label,
         value: points,
-        reason: "La señal aumenta la urgencia operativa por impacto o concentración.",
+        reason:
+          "La señal aumenta la urgencia operativa por impacto o concentración.",
       });
     }
   }
 
-  const validationPenalty = (restaurant.quality?.flags ?? []).reduce((acc, flag) => {
-    if (flag.severity === "error") {
-      return acc + config.weights.dataQuality.errorPenalty;
-    }
+  const validationPenalty = (restaurant.quality?.flags ?? []).reduce(
+    (acc, flag) => {
+      if (flag.severity === "error") {
+        return acc + config.weights.dataQuality.errorPenalty;
+      }
 
-    if (flag.severity === "warning") {
-      return acc + config.weights.dataQuality.warningPenalty;
-    }
+      if (flag.severity === "warning") {
+        return acc + config.weights.dataQuality.warningPenalty;
+      }
 
-    return acc;
-  }, 0);
+      return acc;
+    },
+    0,
+  );
 
   if (validationPenalty > 0) {
     breakdown.confidenceAdjustment.push({
@@ -86,9 +109,15 @@ export function computeRestaurantPriority(
   }
 
   const observedRiskRaw = sum(breakdown.observedRisk.map((item) => item.value));
-  const deteriorationMomentumRaw = sum(breakdown.deteriorationMomentum.map((item) => item.value));
-  const businessImpactRaw = sum(breakdown.businessImpact.map((item) => item.value));
-  const confidenceAdjustmentRaw = Math.abs(sum(breakdown.confidenceAdjustment.map((item) => item.value)));
+  const deteriorationMomentumRaw = sum(
+    breakdown.deteriorationMomentum.map((item) => item.value),
+  );
+  const businessImpactRaw = sum(
+    breakdown.businessImpact.map((item) => item.value),
+  );
+  const confidenceAdjustmentRaw = Math.abs(
+    sum(breakdown.confidenceAdjustment.map((item) => item.value)),
+  );
 
   const weighted: PriorityScore = {
     observedRisk: normalizeSection(

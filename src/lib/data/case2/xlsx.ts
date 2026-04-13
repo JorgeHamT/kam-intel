@@ -68,13 +68,18 @@ function readZipEntries(buffer: Buffer): Map<string, ZipEntry> {
 function readZipEntry(buffer: Buffer, entry: ZipEntry): string {
   const localOffset = entry.localHeaderOffset;
   if (buffer.readUInt32LE(localOffset) !== LOCAL_FILE_SIGNATURE) {
-    throw new Error(`Invalid XLSX file: malformed local header for ${entry.fileName}.`);
+    throw new Error(
+      `Invalid XLSX file: malformed local header for ${entry.fileName}.`,
+    );
   }
 
   const fileNameLength = buffer.readUInt16LE(localOffset + 26);
   const extraLength = buffer.readUInt16LE(localOffset + 28);
   const dataOffset = localOffset + 30 + fileNameLength + extraLength;
-  const compressed = buffer.subarray(dataOffset, dataOffset + entry.compressedSize);
+  const compressed = buffer.subarray(
+    dataOffset,
+    dataOffset + entry.compressedSize,
+  );
 
   if (entry.compressionMethod === 0) {
     return compressed.toString("utf8");
@@ -84,7 +89,9 @@ function readZipEntry(buffer: Buffer, entry: ZipEntry): string {
     return inflateRawSync(compressed).toString("utf8");
   }
 
-  throw new Error(`Unsupported ZIP compression method ${entry.compressionMethod}.`);
+  throw new Error(
+    `Unsupported ZIP compression method ${entry.compressionMethod}.`,
+  );
 }
 
 function decodeXmlText(input: string): string {
@@ -138,7 +145,9 @@ function parseRelationships(xml: string): Map<string, string> {
   return relationships;
 }
 
-function parseWorkbookSheets(xml: string): Array<{ name: string; relationshipId: string }> {
+function parseWorkbookSheets(
+  xml: string,
+): Array<{ name: string; relationshipId: string }> {
   const cleanXml = stripXmlNamespaces(xml);
   const tags = cleanXml.match(/<sheet\b[^>]*\/>/g) ?? [];
 
@@ -148,7 +157,10 @@ function parseWorkbookSheets(xml: string): Array<{ name: string; relationshipId:
       const relationshipId = getAttributeValue(tag, "r:id");
       return name && relationshipId ? { name, relationshipId } : null;
     })
-    .filter((value): value is { name: string; relationshipId: string } => value !== null);
+    .filter(
+      (value): value is { name: string; relationshipId: string } =>
+        value !== null,
+    );
 }
 
 function columnLettersToIndex(reference: string): number {
@@ -162,7 +174,10 @@ function columnLettersToIndex(reference: string): number {
   return index - 1;
 }
 
-function parseCellValue(cellXml: string, sharedStrings: string[]): string | number | null {
+function parseCellValue(
+  cellXml: string,
+  sharedStrings: string[],
+): string | number | null {
   const cellTag = cellXml.match(/^<c\b[^>]*>/)?.[0] ?? "<c>";
   const cellType = getAttributeValue(cellTag, "t");
   const valueMatch = cellXml.match(/<v>([\s\S]*?)<\/v>/);
@@ -211,14 +226,22 @@ function parseWorksheetXml(
         continue;
       }
 
-      values.set(columnLettersToIndex(reference), parseCellValue(cellXml, sharedStrings));
+      values.set(
+        columnLettersToIndex(reference),
+        parseCellValue(cellXml, sharedStrings),
+      );
     }
 
     return { rowNumber, values };
   });
 }
 
-function identifyHeaderRow(rows: Array<{ rowNumber: number; values: Map<number, string | number | null> }>): {
+function identifyHeaderRow(
+  rows: Array<{
+    rowNumber: number;
+    values: Map<number, string | number | null>;
+  }>,
+): {
   headerRowNumber: number;
   headers: string[];
   startIndex: number;
@@ -228,12 +251,15 @@ function identifyHeaderRow(rows: Array<{ rowNumber: number; values: Map<number, 
       .sort(([left], [right]) => left - right)
       .map(([, value]) => (typeof value === "string" ? value.trim() : value));
 
-    const allStrings = orderedValues.every((value) => typeof value === "string");
+    const allStrings = orderedValues.every(
+      (value) => typeof value === "string",
+    );
     const hasRestaurantId = orderedValues.includes("restaurant_id");
     const hasRisk = orderedValues.includes("semaforo_riesgo");
 
     if (allStrings && hasRestaurantId && hasRisk) {
-      const firstIndex = [...row.values.keys()].sort((left, right) => left - right)[0] ?? 0;
+      const firstIndex =
+        [...row.values.keys()].sort((left, right) => left - right)[0] ?? 0;
       return {
         headerRowNumber: row.rowNumber,
         headers: orderedValues as string[],
@@ -246,7 +272,10 @@ function identifyHeaderRow(rows: Array<{ rowNumber: number; values: Map<number, 
 }
 
 function buildWorksheetRows(
-  rows: Array<{ rowNumber: number; values: Map<number, string | number | null> }>,
+  rows: Array<{
+    rowNumber: number;
+    values: Map<number, string | number | null>;
+  }>,
   headerRowNumber: number,
   headers: string[],
   startIndex: number,
@@ -276,15 +305,17 @@ export function readWorksheetFromWorkbook(
   const entries = readZipEntries(buffer);
   const workbookXml = readZipEntry(
     buffer,
-    entries.get("xl/workbook.xml") ?? (() => {
-      throw new Error("Workbook definition not found.");
-    })(),
+    entries.get("xl/workbook.xml") ??
+      (() => {
+        throw new Error("Workbook definition not found.");
+      })(),
   );
   const workbookRelsXml = readZipEntry(
     buffer,
-    entries.get("xl/_rels/workbook.xml.rels") ?? (() => {
-      throw new Error("Workbook relationships not found.");
-    })(),
+    entries.get("xl/_rels/workbook.xml.rels") ??
+      (() => {
+        throw new Error("Workbook relationships not found.");
+      })(),
   );
 
   const sharedStringsEntry = entries.get("xl/sharedStrings.xml");
@@ -293,7 +324,9 @@ export function readWorksheetFromWorkbook(
     : [];
   const relationships = parseRelationships(workbookRelsXml);
   const workbookSheets = parseWorkbookSheets(workbookXml);
-  const selectedSheet = workbookSheets.find((sheet) => sheet.name === sheetName);
+  const selectedSheet = workbookSheets.find(
+    (sheet) => sheet.name === sheetName,
+  );
 
   if (!selectedSheet) {
     throw new Error(`Worksheet "${sheetName}" not found in workbook.`);
@@ -301,7 +334,9 @@ export function readWorksheetFromWorkbook(
 
   const target = relationships.get(selectedSheet.relationshipId);
   if (!target) {
-    throw new Error(`Relationship "${selectedSheet.relationshipId}" not found for worksheet.`);
+    throw new Error(
+      `Relationship "${selectedSheet.relationshipId}" not found for worksheet.`,
+    );
   }
 
   const worksheetPath = `xl/${target.replace(/^\/+/, "")}`;
@@ -313,10 +348,15 @@ export function readWorksheetFromWorkbook(
 
   const worksheetXml = readZipEntry(buffer, worksheetEntry);
   const parsedRows = parseWorksheetXml(worksheetXml, sharedStrings);
-  const { headerRowNumber, headers, startIndex } = identifyHeaderRow(parsedRows);
-  const titleRow = parsedRows.find((row) => row.rowNumber === headerRowNumber - 1);
+  const { headerRowNumber, headers, startIndex } =
+    identifyHeaderRow(parsedRows);
+  const titleRow = parsedRows.find(
+    (row) => row.rowNumber === headerRowNumber - 1,
+  );
   const title = titleRow
-    ? [...titleRow.values.values()].find((value) => typeof value === "string" && value.trim().length > 0)
+    ? [...titleRow.values.values()].find(
+        (value) => typeof value === "string" && value.trim().length > 0,
+      )
     : null;
 
   return {

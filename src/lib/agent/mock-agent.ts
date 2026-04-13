@@ -30,8 +30,10 @@ export function getMockAgentDigest(): AgentDigest {
   const primary = result.restaurants[0];
 
   return {
-    headline: "El agente detectó presión operativa concentrada en cuentas clave.",
-    detected: primary.whyFlagged[0] ?? "Se detectaron señales operativas relevantes.",
+    headline:
+      "El agente detectó presión operativa concentrada en cuentas clave.",
+    detected:
+      primary.whyFlagged[0] ?? "Se detectaron señales operativas relevantes.",
     whyItMatters: primary.businessSummary,
     recommendation: primary.recommendedAction.label,
     nextStep: primary.nextBestStep.label,

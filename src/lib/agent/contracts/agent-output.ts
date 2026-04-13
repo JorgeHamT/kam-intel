@@ -129,7 +129,12 @@ export type RestaurantAssessment = {
 
 export type RestaurantMiniAssessment = Pick<
   RestaurantAssessment,
-  "restaurantId" | "status" | "priorityScore" | "severity" | "confidence" | "whyFlagged"
+  | "restaurantId"
+  | "status"
+  | "priorityScore"
+  | "severity"
+  | "confidence"
+  | "whyFlagged"
 > & {
   restaurantName?: string;
 };
@@ -193,7 +198,12 @@ export type PortfolioAssessment = {
   concentrationRiskCount: number;
   averagePriorityScore: number;
   highestPriorityRestaurants: RestaurantMiniAssessment[];
-  kamsUnderPressure: Array<Pick<KamAssessment, "kamId" | "kamName" | "priorityScore" | "portfolioStatus">>;
+  kamsUnderPressure: Array<
+    Pick<
+      KamAssessment,
+      "kamId" | "kamName" | "priorityScore" | "portfolioStatus"
+    >
+  >;
 };
 
 export type DashboardAgentSummary = {

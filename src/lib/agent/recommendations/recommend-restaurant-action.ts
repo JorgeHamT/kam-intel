@@ -1,6 +1,10 @@
 import type { AgentConfig } from "../config/index.ts";
 import type { RiskStatus } from "../contracts/agent-input.ts";
-import type { NextBestAction, Recommendation, Signal } from "../contracts/agent-output.ts";
+import type {
+  NextBestAction,
+  Recommendation,
+  Signal,
+} from "../contracts/agent-output.ts";
 
 function buildRecommendation(
   code: Recommendation["code"],
@@ -10,7 +14,10 @@ function buildRecommendation(
   return { code, label, rationale };
 }
 
-function buildNextStep(code: NextBestAction["code"], label: string): NextBestAction {
+function buildNextStep(
+  code: NextBestAction["code"],
+  label: string,
+): NextBestAction {
   return { code, label };
 }
 
@@ -21,7 +28,9 @@ export function recommendRestaurantAction(params: {
   config: AgentConfig;
 }): { recommendedAction: Recommendation; nextBestStep: NextBestAction } {
   const { status, confidence, signals, config } = params;
-  const hasDataRisk = signals.some((signal) => signal.type === "data_quality_risk");
+  const hasDataRisk = signals.some(
+    (signal) => signal.type === "data_quality_risk",
+  );
   const hasImpact = signals.some((signal) => signal.type === "business_impact");
   const hasCompound = signals.some((signal) => signal.type === "compound_risk");
 
@@ -42,14 +51,21 @@ export function recommendRestaurantAction(params: {
     };
   }
 
-  if (status === "critical" && hasImpact && confidence >= config.thresholds.signals.confidence.degradedConfidence) {
+  if (
+    status === "critical" &&
+    hasImpact &&
+    confidence >= config.thresholds.signals.confidence.degradedConfidence
+  ) {
     return {
       recommendedAction: buildRecommendation(
         "commercial_operational_audit",
         "Auditoría comercial-operativa",
         "La cuenta combina deterioro y peso de negocio, por lo que conviene revisar operación y plan comercial en conjunto.",
       ),
-      nextBestStep: buildNextStep("audit_vs_peers", "Auditar desempeño contra peers"),
+      nextBestStep: buildNextStep(
+        "audit_vs_peers",
+        "Auditar desempeño contra peers",
+      ),
     };
   }
 
@@ -74,7 +90,10 @@ export function recommendRestaurantAction(params: {
         "Contacto prioritario con la cuenta",
         "Hay señales accionables suficientes para abrir contacto operativo/comercial con prudencia.",
       ),
-      nextBestStep: buildNextStep("prioritize_contact", "Priorizar contacto con esta cuenta"),
+      nextBestStep: buildNextStep(
+        "prioritize_contact",
+        "Priorizar contacto con esta cuenta",
+      ),
     };
   }
 
@@ -95,7 +114,9 @@ export function recommendRestaurantAction(params: {
       "Monitoreo",
       "No hay evidencia suficiente para una intervención inmediata en esta corrida.",
     ),
-    nextBestStep: buildNextStep("monitor_next_window", "Monitorear en la siguiente ventana"),
+    nextBestStep: buildNextStep(
+      "monitor_next_window",
+      "Monitorear en la siguiente ventana",
+    ),
   };
 }
-

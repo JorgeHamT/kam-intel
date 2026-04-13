@@ -1,9 +1,11 @@
 # AGENTS.md
 
 ## Proyecto
+
 **Rappi KAM Intelligence**
 
 ## Propósito de este archivo
+
 Este archivo existe para que cualquier agente de código (Codex, Cursor, Windsurf, etc.) trabaje dentro del repo sin romper alcance, sin mezclar frentes y sin inventar decisiones que ya están congeladas.
 
 No es una spec de producto completa.
@@ -13,6 +15,7 @@ Sirve como guía operativa para implementar con disciplina.
 ---
 
 ## 1) Fuente de verdad del proyecto
+
 Antes de implementar cualquier cosa, asume como oficial lo siguiente:
 
 - **Caso elegido:** Caso 02 — Agente de Inteligencia Operativa. fileciteturn0file3
@@ -29,6 +32,7 @@ Si algo contradice esto, **no lo implementes**.
 ---
 
 ## 2) Regla principal de ejecución
+
 **Nada importante debe inventarse.**
 
 Si una decisión no está congelada, el agente debe:
@@ -51,7 +55,9 @@ Ejemplos de cosas que **no** se deben inventar:
 ---
 
 ## 3) Qué es y qué no es esta solución
+
 ### Sí es
+
 Un sistema que:
 
 1. observa datos de entrada,
@@ -63,6 +69,7 @@ Un sistema que:
 7. genera alertas y vistas accionables. fileciteturn0file5
 
 ### No es
+
 - un dashboard pasivo
 - un backend enterprise completo
 - una integración real con sistemas externos
@@ -72,50 +79,65 @@ Un sistema que:
 ---
 
 ## 4) Estructura oficial de chats / frentes
+
 El proyecto está dividido por chats/frentes. Cada agente debe respetar estos límites. La distribución oficial es esta: fileciteturn0file0turn0file2
 
 ### Chat 00 — HQ / Fuente de Verdad
+
 Consolida visión, alcance, decisiones oficiales, dependencias, criterios de entrega y pendientes. **Nada importante existe si no quedó asentado aquí.** fileciteturn0file2
 
 ### Chat 01 — Producto / UX funcional
+
 Define producto, navegación, módulos por pantalla, acciones reales vs simuladas y flujo funcional. fileciteturn0file0turn0file2
 
 ### Chat 02 — Data / KPIs / Validación
+
 Define auditoría del dataset, campos confiables, limpieza, recálculo, KPIs defendibles, benchmark y validación. fileciteturn0file0turn0file2
 
 ### Chat 03 — Agente / Scoring / Recomendaciones
+
 Define la lógica operativa del agente: señales, severidad, prioridad, why flagged, recommended action, next best step. fileciteturn0file0turn0file2
 
 ### Chat 04 — UI / Design System / Blueprint
+
 Congela dirección visual, design system, shell visual, patrones UI y blueprint por pantalla. fileciteturn0file0turn0file2
 
 ### Chat 05 — Arquitectura técnica / App Shell
+
 Traduce producto + datos + lógica + UI en arquitectura modular real, rutas, shell, capas y estrategia de implementación. fileciteturn0file0turn0file2
 
 ### Chat 06 — Frontend / Pantallas
+
 Implementa pantallas, rutas, componentes, estados UI y wiring visual. fileciteturn0file0turn0file2
 
 ### Chat 07 — Motor de datos / Cálculos
+
 Implementa el pipeline local del dataset: parsing, normalización, validación, recálculos, scoring estructural, alertas y payloads para UI. fileciteturn0file0turn0file2
 
 ### Chat 08 — Demo / Escenarios / Reset
+
 Congela flujo de demo, escenarios, reset, plan B y operación en vivo. fileciteturn0file0turn0file2
 
 ### Chat 09 — README / One-pager / Entrega
+
 Produce la documentación final de entrega. fileciteturn0file0turn0file2
 
 ### Chat 10 — Deck / Storytelling
+
 Define la narrativa final, estructura del deck y guion de presentación. fileciteturn0file0turn0file2
 
 ### Chat 11 — QA / Pulido final
+
 Filtro crítico final: detecta humo, inconsistencias y riesgos. fileciteturn0file0turn0file2
 
 ---
 
 ## 5) Regla de alcance por agente
+
 Cada agente debe trabajar **solo en su frente**.
 
 ### Permitido
+
 - crear archivos dentro de su frente
 - editar archivos directamente relacionados con su frente
 - agregar tipos compartidos solo si son realmente necesarios
@@ -123,6 +145,7 @@ Cada agente debe trabajar **solo en su frente**.
 - crear mocks o placeholders seguros cuando la lógica final no esté cerrada
 
 ### Prohibido
+
 - tocar archivos de otros frentes sin necesidad real
 - mezclar lógica de datos con UI
 - cerrar fórmulas no congeladas
@@ -134,9 +157,11 @@ Cada agente debe trabajar **solo en su frente**.
 ---
 
 ## 6) Orden recomendado de trabajo
+
 Orden oficial sugerido: fileciteturn0file2
 
 ### Fase 1
+
 - Chat 00 — HQ
 - Chat 01 — Producto
 - Chat 02 — Data
@@ -144,11 +169,13 @@ Orden oficial sugerido: fileciteturn0file2
 - Chat 04 — UI Blueprint
 
 ### Fase 2
+
 - Chat 05 — Arquitectura técnica
 - Chat 06 — Frontend
 - Chat 07 — Motor de datos
 
 ### Fase 3
+
 - Chat 08 — Demo
 - Chat 09 — README / One-pager
 - Chat 10 — Deck
@@ -159,6 +186,7 @@ Si falta una dependencia crítica de una fase anterior, el agente no debe “rel
 ---
 
 ## 7) Dependencias entre chats
+
 Mapa oficial resumido: fileciteturn0file2
 
 - Chat 01 depende de Chat 00
@@ -176,13 +204,16 @@ Mapa oficial resumido: fileciteturn0file2
 ---
 
 ## 8) Estrategia de repo y ramas
+
 Estrategia sugerida de repo: fileciteturn0file1
 
 ### Ramas base
+
 - `main` = estable
 - `develop` = integración
 
 ### Ramas por frente
+
 - `feature/ui-shell`
 - `feature/data-engine`
 - `feature/agent-logic`
@@ -191,6 +222,7 @@ Estrategia sugerida de repo: fileciteturn0file1
 - `feature/deck-docs`
 
 ### Reglas
+
 - trabajar por feature branch
 - integrar en `develop`
 - dejar `main` estable
@@ -201,40 +233,50 @@ Estrategia sugerida de repo: fileciteturn0file1
 ---
 
 ## 9) Pantallas oficiales y propósito funcional
+
 Semilla oficial del blueprint de pantallas: fileciteturn0file4
 
 ### Dashboard General
+
 Vista ejecutiva global.
 Módulos esperados incluyen KPIs principales, banner crítico, mapa LATAM, ciudades por riesgo, verticales por concentración de riesgo, KAMs bajo presión, señales detectadas, why flagged y resumen de alertas. fileciteturn0file4
 
 ### Vista KAM
+
 Comparar managers y portfolios.
 Debe soportar lectura comparativa y lógica de intervención. fileciteturn0file4
 
 ### Detalle de KAM
+
 Control tower individual.
 Debe mostrar perfil, KPIs de portfolio, summary, top accounts, inventory, charts defendibles, signals detected y recommended intervention. fileciteturn0file4
 
 ### Vista por Restaurante
+
 Explicar riesgo y siguiente acción.
 Debe mostrar score/status, KPIs clave, operational diagnosis, benchmark, why flagged, recommended action, next best step y business summary. fileciteturn0file4
 
 ### Alertas
+
 Feed de alertas accionables.
 Debe incluir filtros, alert cards, why flagged, priority score, next action, urgent queue y status de Telegram si existe. fileciteturn0file4
 
 ### Data Validation
+
 Mostrar robustez metodológica.
 Debe incluir resumen de validación, campos recalculados, anomalías, comparación entre semáforo original vs semáforo del agente y nota metodológica. fileciteturn0file4
 
 ### Deck
+
 Presentación interactiva dentro del producto.
 Debe cubrir problema, solución, validación, lógica del agente, overview de pantallas, demo flow y valor de negocio. fileciteturn0file4
 
 ---
 
 ## 10) Reglas de implementación técnica
+
 ### Reglas generales
+
 - usar TypeScript estricto
 - no usar `any` salvo justificación explícita
 - mantener componentes pequeños
@@ -247,6 +289,7 @@ Debe cubrir problema, solución, validación, lógica del agente, overview de pa
 - no introducir integraciones externas frágiles como núcleo del sistema
 
 ### UI
+
 - la UI debe expresar claramente la lógica del agente
 - evitar módulos que aparenten precisión falsa
 - no mostrar métricas no defendibles
@@ -254,6 +297,7 @@ Debe cubrir problema, solución, validación, lógica del agente, overview de pa
 - mantener una estética sobria, premium y creíble, alineada con Rappi. fileciteturn0file3turn0file5
 
 ### Datos
+
 - tratar el dataset embebido como entrada base
 - recalcular campos clave antes de confiar en derivados del Excel. fileciteturn0file3turn0file5
 - usar campos base como fuente de verdad. fileciteturn0file3
@@ -261,6 +305,7 @@ Debe cubrir problema, solución, validación, lógica del agente, overview de pa
 - cuando no haya sustento suficiente, devolver estados tipo `insuficiente para concluir` en vez de fingir certeza
 
 ### Demo
+
 - todo debe poder correrse en vivo
 - la demo debe ser reiniciable. fileciteturn0file3turn0file5
 - el sistema debe soportar baseline + escenarios + reset
@@ -269,6 +314,7 @@ Debe cubrir problema, solución, validación, lógica del agente, overview de pa
 ---
 
 ## 11) Qué puede empezar a implementar un agente desde ya
+
 Mientras no haya contradicción con la fuente de verdad, se puede avanzar en:
 
 - app shell
@@ -293,6 +339,7 @@ Esto es consistente con los alcances ya autorizados para Codex en los resúmenes
 ---
 
 ## 12) Qué no debe implementar todavía un agente
+
 No implementar todavía, salvo congelación explícita en la fuente de verdad:
 
 - dataset real conectado con lógica no validada
@@ -312,6 +359,7 @@ No implementar todavía, salvo congelación explícita en la fuente de verdad:
 ---
 
 ## 13) Formato de trabajo esperado para agentes
+
 Cada intervención grande debe dejar claro:
 
 1. qué frente está tocando,
@@ -334,6 +382,7 @@ Este sistema está recomendado oficialmente para no perder continuidad entre cha
 ---
 
 ## 14) Criterio de prudencia
+
 Cuando haya duda entre:
 
 - implementar algo “impresionante” pero frágil, o
@@ -346,6 +395,7 @@ La regla del proyecto es **credibilidad primero, humo nunca**. filecitetur
 ---
 
 ## 15) Checklist rápido antes de hacer commit
+
 Antes de cerrar trabajo, validar:
 
 - ¿Respeté el alcance de mi frente?
@@ -363,6 +413,7 @@ Si alguna respuesta es “no”, no cierres como terminado.
 ---
 
 ## 16) En caso de conflicto entre instrucciones
+
 Prioridad sugerida:
 
 1. **Decisiones congeladas / fuente de verdad**

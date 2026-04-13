@@ -19,4 +19,3 @@ test("detects compound restaurant risk across multiple signal families", () => {
   assert.ok(signals.some((signal) => signal.type === "concentration_risk"));
   assert.ok(signals.some((signal) => signal.type === "data_quality_risk"));
 });
-

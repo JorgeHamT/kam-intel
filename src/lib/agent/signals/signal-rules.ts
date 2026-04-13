@@ -1,4 +1,8 @@
-import type { Signal, SignalEvidence, SignalType } from "../contracts/agent-output.ts";
+import type {
+  Signal,
+  SignalEvidence,
+  SignalType,
+} from "../contracts/agent-output.ts";
 import type { RiskStatus } from "../contracts/agent-input.ts";
 
 export function createSignal(params: {
@@ -22,4 +26,3 @@ export function createSignal(params: {
     affectsRecommendation: params.affectsRecommendation ?? true,
   };
 }
-

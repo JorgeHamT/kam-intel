@@ -3,9 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BuildingOffice2Icon,
   BellAlertIcon,
   ChartBarSquareIcon,
   ClipboardDocumentCheckIcon,
+  MapPinIcon,
+  PlayIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
 
@@ -23,30 +26,31 @@ const navItems: Array<NavItem & { icon: typeof ChartBarSquareIcon }> = [
   },
 ];
 
+const executiveItems = [
+  { label: "Cities", icon: MapPinIcon },
+  { label: "Verticals", icon: BuildingOffice2Icon },
+];
+
 export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-72 shrink-0 flex-col border-r border-white/80 bg-[#fff7f5]/95 px-5 py-6 backdrop-blur lg:flex">
-      <div className="rounded-[30px] border border-brand-100/80 bg-white p-5 shadow-panel">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand text-lg font-black text-white shadow-sm">
-            R
-          </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-600">
-              Rappi
-            </p>
-            <h1 className="text-base font-semibold text-ink">KAM Intelligence</h1>
-          </div>
+    <aside className="sticky top-0 hidden h-screen w-[228px] shrink-0 flex-col border-r border-[#e5e6eb] bg-[#fbfbfc] px-4 py-5 lg:flex">
+      <div className="flex items-center gap-3 px-1">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand text-sm font-black text-white">
+          R
         </div>
-        <p className="mt-4 text-sm leading-6 text-slate-600">
-          Torre de control operativa para lectura ejecutiva, priorización y seguimiento
-          de riesgo comercial.
-        </p>
+        <div>
+          <h1 className="text-[17px] font-semibold tracking-[-0.03em] text-ink">
+            Rappi KAM
+          </h1>
+          <p className="text-[10px] font-medium uppercase tracking-[0.15em] text-slate-400">
+            Intelligence
+          </p>
+        </div>
       </div>
 
-      <nav className="mt-8 space-y-2">
+      <nav className="mt-8 space-y-1.5">
         {navItems.map(({ href, label, icon: Icon }) => {
           const isActive =
             pathname === href || (href !== "/" && pathname.startsWith(href));
@@ -56,27 +60,58 @@ export function Sidebar() {
               key={href}
               href={href}
               className={cn(
-                "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition",
+                "flex items-center gap-3 rounded-[12px] px-4 py-3 text-sm font-medium transition",
                 isActive
-                  ? "bg-brand text-white shadow-panel"
-                  : "border border-transparent text-slate-700 hover:border-white hover:bg-white hover:text-brand-700",
+                  ? "bg-[#fff0f0] text-brand"
+                  : "border border-transparent text-slate-600 hover:bg-white hover:text-[#17181b]",
               )}
             >
-              <Icon className="h-5 w-5" />
+              <Icon className={cn("h-4.5 w-4.5", isActive ? "text-brand" : "")} />
               {label}
             </Link>
           );
         })}
       </nav>
 
-      <div className="mt-auto rounded-[28px] border border-dashed border-brand-200 bg-white/70 p-5">
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-700">
-          Agente visible
+      <div className="mt-10">
+        <p className="px-4 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+          Executive view
         </p>
-        <p className="mt-3 text-sm leading-6 text-slate-700">
-          La interfaz prioriza cuatro preguntas en cada vista: qué detectó, por qué
-          importa, qué recomienda y cuál es el siguiente paso.
-        </p>
+        <div className="mt-3 space-y-1.5">
+          {executiveItems.map(({ label, icon: Icon }) => (
+            <button
+              key={label}
+              type="button"
+              className="flex w-full items-center gap-3 rounded-[12px] px-4 py-3 text-sm font-medium text-slate-500 transition hover:bg-white hover:text-[#17181b]"
+            >
+              <Icon className="h-4.5 w-4.5" />
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-auto space-y-4">
+        <div className="rounded-[16px] border border-[#e7e8ed] bg-white p-3">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+            System status
+          </p>
+          <div className="mt-2 flex items-center gap-2 text-xs font-medium text-slate-600">
+            <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+            Real-time sync active
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 px-2">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#17181b] text-xs font-semibold text-white">
+            ER
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-[#17181b]">Elena Rodriguez</p>
+            <p className="text-[11px] text-slate-500">Region Head</p>
+          </div>
+          <PlayIcon className="ml-auto h-4 w-4 text-slate-400" />
+        </div>
       </div>
     </aside>
   );

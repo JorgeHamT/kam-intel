@@ -1,20 +1,33 @@
 import type { ScenarioId, ScenarioOption } from "@/types/domain";
 
+export const OFFICIAL_ENTRY_ROUTE = "/";
+export const FALLBACK_ROUTE = "/validation";
+
 export const scenarioOptions: ScenarioOption[] = [
   {
-    id: "baseline",
-    label: "Base operativa",
-    subtitle: "Vista controlada para walkthrough general",
+    id: "base",
+    label: "Base",
+    subtitle: "Lectura operativa completa para el walkthrough oficial",
   },
   {
-    id: "promo-risk",
-    label: "Riesgo promocional",
-    subtitle: "Mock para caída de activación en cuentas clave",
+    id: "crisis",
+    label: "Crisis",
+    subtitle: "Enfatiza presión crítica y cola prioritaria real",
   },
   {
-    id: "coverage-gap",
-    label: "Brecha de cobertura",
-    subtitle: "Mock para revisar señales de datos incompletos",
+    id: "discrepancias",
+    label: "Discrepancias",
+    subtitle: "Resalta conflictos de dato y confianza degradada",
+  },
+  {
+    id: "estable",
+    label: "Estable",
+    subtitle: "Recorta la lectura a señales de menor urgencia",
+  },
+  {
+    id: "foco-kam",
+    label: "Foco KAM",
+    subtitle: "Centra la presentación en un portfolio prioritario",
   },
 ];
 

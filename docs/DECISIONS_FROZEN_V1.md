@@ -48,5 +48,5 @@
 \#\# Dataset  
 \- Usar campos base como fuente de verdad  
 \- Recalcular métricas derivadas  
-\- Tratar activo\_desde con cautela  
-\- Usar semaforo\_riesgo solo como benchmark comparativo  
+\- Tratar activo_desde con cautela  
+\- Usar semaforo_riesgo solo como benchmark comparativo

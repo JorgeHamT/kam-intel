@@ -1,4 +1,7 @@
-import { ArrowTrendingDownIcon, ArrowTrendingUpIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowTrendingDownIcon,
+  ArrowTrendingUpIcon,
+} from "@heroicons/react/24/outline";
 
 import { DataCard } from "@/components/shared/data-card";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -53,7 +56,9 @@ export function KpiGrid({ items }: KpiGridProps) {
                     tone={item.tone}
                   />
                 </div>
-                <p className="mt-3 text-sm leading-6 text-slate-600">{item.insight}</p>
+                <p className="mt-3 text-sm leading-6 text-slate-600">
+                  {item.insight}
+                </p>
               </>
             }
           />

@@ -25,21 +25,35 @@ test("computes a bounded priority score with explicit breakdown sections", () =>
     concentrationShare: 0.84,
   });
 
-  assert.ok(result.assessment.priorityScore >= 0 && result.assessment.priorityScore <= 100);
+  assert.ok(
+    result.assessment.priorityScore >= 0 &&
+      result.assessment.priorityScore <= 100,
+  );
   assert.ok(result.assessment.scoreBreakdown.observedRisk.length > 0);
   assert.ok(result.assessment.scoreBreakdown.businessImpact.length > 0);
-  assert.ok(result.assessment.scoreBreakdown.normalized.total === result.assessment.priorityScore);
+  assert.ok(
+    result.assessment.scoreBreakdown.normalized.total ===
+      result.assessment.priorityScore,
+  );
 });
 
 test("classifies provisional severity bands", () => {
-  const critical = aggregateRestaurantAssessment(agentFixtures.restaurants[0], defaultAgentConfig, {
-    kamPortfolioGmv7d: 149000,
-    concentrationShare: 0.84,
-  });
-  const stable = aggregateRestaurantAssessment(agentFixtures.restaurants[2], defaultAgentConfig, {
-    kamPortfolioGmv7d: 420000,
-    concentrationShare: 0.1,
-  });
+  const critical = aggregateRestaurantAssessment(
+    agentFixtures.restaurants[0],
+    defaultAgentConfig,
+    {
+      kamPortfolioGmv7d: 149000,
+      concentrationShare: 0.84,
+    },
+  );
+  const stable = aggregateRestaurantAssessment(
+    agentFixtures.restaurants[2],
+    defaultAgentConfig,
+    {
+      kamPortfolioGmv7d: 420000,
+      concentrationShare: 0.1,
+    },
+  );
 
   assert.equal(critical.assessment.status, "critical");
   assert.equal(critical.assessment.severity, "high");

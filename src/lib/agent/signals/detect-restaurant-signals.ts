@@ -1,5 +1,8 @@
 import type { AgentConfig } from "../config/index.ts";
-import type { RestaurantMetricsInput, RiskStatus } from "../contracts/agent-input.ts";
+import type {
+  RestaurantMetricsInput,
+  RiskStatus,
+} from "../contracts/agent-input.ts";
 import type { Signal } from "../contracts/agent-output.ts";
 import { selectPeerGroup } from "../helpers/peer-group-utils.ts";
 import { createSignal } from "./signal-rules.ts";
@@ -21,7 +24,8 @@ export function detectRestaurantSignals(
   let absoluteStatus: RiskStatus = "stable";
   if (
     (restaurant.deltaRatingRecalc ?? 0) <= t.absolute.deltaRatingCritical ||
-    (restaurant.tasaCancelacionPct ?? 0) >= t.absolute.cancellationCriticalPct ||
+    (restaurant.tasaCancelacionPct ?? 0) >=
+      t.absolute.cancellationCriticalPct ||
     (restaurant.tiempoEntregaAvgMin ?? 0) >= t.absolute.deliveryCriticalMin ||
     (restaurant.quejas7d ?? 0) >= t.absolute.complaintsCritical ||
     (restaurant.npsScore ?? 100) <= t.absolute.npsCritical
@@ -72,20 +76,23 @@ export function detectRestaurantSignals(
     const comparisons = selectedPeer.comparisons;
     const relativeHits = [
       comparisons.delta_rating_recalc?.deltaToMedian !== null &&
-      comparisons.delta_rating_recalc?.deltaToMedian !== undefined &&
-      comparisons.delta_rating_recalc.deltaToMedian <= t.relative.peerDeltaRisk,
+        comparisons.delta_rating_recalc?.deltaToMedian !== undefined &&
+        comparisons.delta_rating_recalc.deltaToMedian <=
+          t.relative.peerDeltaRisk,
       comparisons.tasa_cancelacion_pct?.deltaToMedian !== null &&
-      comparisons.tasa_cancelacion_pct?.deltaToMedian !== undefined &&
-      comparisons.tasa_cancelacion_pct.deltaToMedian >= t.relative.peerCancellationRisk,
+        comparisons.tasa_cancelacion_pct?.deltaToMedian !== undefined &&
+        comparisons.tasa_cancelacion_pct.deltaToMedian >=
+          t.relative.peerCancellationRisk,
       comparisons.tiempo_entrega_avg_min?.deltaToMedian !== null &&
-      comparisons.tiempo_entrega_avg_min?.deltaToMedian !== undefined &&
-      comparisons.tiempo_entrega_avg_min.deltaToMedian >= t.relative.peerDeliveryRisk,
+        comparisons.tiempo_entrega_avg_min?.deltaToMedian !== undefined &&
+        comparisons.tiempo_entrega_avg_min.deltaToMedian >=
+          t.relative.peerDeliveryRisk,
       comparisons.quejas_7d?.deltaToMedian !== null &&
-      comparisons.quejas_7d?.deltaToMedian !== undefined &&
-      comparisons.quejas_7d.deltaToMedian >= t.relative.peerComplaintsRisk,
+        comparisons.quejas_7d?.deltaToMedian !== undefined &&
+        comparisons.quejas_7d.deltaToMedian >= t.relative.peerComplaintsRisk,
       comparisons.nps_score?.deltaToMedian !== null &&
-      comparisons.nps_score?.deltaToMedian !== undefined &&
-      comparisons.nps_score.deltaToMedian <= t.relative.peerNpsRisk,
+        comparisons.nps_score?.deltaToMedian !== undefined &&
+        comparisons.nps_score.deltaToMedian <= t.relative.peerNpsRisk,
     ].filter(Boolean).length;
 
     if (relativeHits > 0) {
@@ -96,7 +103,11 @@ export function detectRestaurantSignals(
           label: "Desempeño por debajo de peers comparables",
           severityHint: relativeHits >= 3 ? "critical" : "at_risk",
           evidence: Object.entries(comparisons)
-            .filter(([, comparison]) => comparison?.deltaToMedian !== null && comparison?.deltaToMedian !== undefined)
+            .filter(
+              ([, comparison]) =>
+                comparison?.deltaToMedian !== null &&
+                comparison?.deltaToMedian !== undefined,
+            )
             .slice(0, 4)
             .map(([metric, comparison]) => ({
               metric,
@@ -113,15 +124,20 @@ export function detectRestaurantSignals(
     (restaurant.varOrdenesPctRecalc ?? 0) <= t.momentum.ordersDropRiskPct &&
     (restaurant.deltaRatingRecalc ?? 0) <= t.absolute.deltaRatingRisk
   ) {
-    const recentPenalty = (restaurant.ageDaysRecalc ?? Number.MAX_SAFE_INTEGER) <= t.momentum.recentAccountDays;
+    const recentPenalty =
+      (restaurant.ageDaysRecalc ?? Number.MAX_SAFE_INTEGER) <=
+      t.momentum.recentAccountDays;
     signals.push(
       createSignal({
         id: `${restaurant.restaurantId}-momentum`,
         type: "accelerated_deterioration",
         label: "Deterioro acelerado en corto plazo",
-        severityHint: recentPenalty || (restaurant.varOrdenesPctRecalc ?? 0) <= t.momentum.ordersDropCriticalPct
-          ? "critical"
-          : "at_risk",
+        severityHint:
+          recentPenalty ||
+          (restaurant.varOrdenesPctRecalc ?? 0) <=
+            t.momentum.ordersDropCriticalPct
+            ? "critical"
+            : "at_risk",
         evidence: [
           {
             metric: "var_ordenes_pct_recalc",
@@ -163,14 +179,19 @@ export function detectRestaurantSignals(
     );
   }
 
-  if ((restaurant.gmvProxy7d ?? 0) >= t.businessImpact.gmvHigh && primaryRisk !== "stable") {
+  if (
+    (restaurant.gmvProxy7d ?? 0) >= t.businessImpact.gmvHigh &&
+    primaryRisk !== "stable"
+  ) {
     signals.push(
       createSignal({
         id: `${restaurant.restaurantId}-impact`,
         type: "business_impact",
         label: "Impacto de negocio relevante",
         severityHint:
-          (restaurant.gmvProxy7d ?? 0) >= t.businessImpact.gmvVeryHigh ? "critical" : "at_risk",
+          (restaurant.gmvProxy7d ?? 0) >= t.businessImpact.gmvVeryHigh
+            ? "critical"
+            : "at_risk",
         evidence: [
           {
             metric: "gmv_proxy_7d",
@@ -186,7 +207,8 @@ export function detectRestaurantSignals(
   if (
     config.featureFlags.enableConcentrationRisk &&
     portfolioContext.kamPortfolioGmv7d > 0 &&
-    portfolioContext.concentrationShare >= t.businessImpact.concentrationShareRisk
+    portfolioContext.concentrationShare >=
+      t.businessImpact.concentrationShareRisk
   ) {
     signals.push(
       createSignal({
@@ -194,7 +216,8 @@ export function detectRestaurantSignals(
         type: "concentration_risk",
         label: "Concentración de riesgo en el portfolio",
         severityHint:
-          portfolioContext.concentrationShare >= t.businessImpact.concentrationShareCritical
+          portfolioContext.concentrationShare >=
+          t.businessImpact.concentrationShareCritical
             ? "critical"
             : "at_risk",
         evidence: [
@@ -215,7 +238,9 @@ export function detectRestaurantSignals(
         id: `${restaurant.restaurantId}-data-quality`,
         type: "data_quality_risk",
         label: "Riesgo por calidad de datos",
-        severityHint: restaurant.quality.flags.some((flag) => flag.severity === "error")
+        severityHint: restaurant.quality.flags.some(
+          (flag) => flag.severity === "error",
+        )
           ? "at_risk"
           : "watchlist",
         evidence: restaurant.quality.flags.slice(0, 3).map((flag) => ({
@@ -261,4 +286,3 @@ export function detectRestaurantSignals(
 
   return signals;
 }
-

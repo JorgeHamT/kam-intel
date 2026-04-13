@@ -1,5 +1,8 @@
 import type { AgentConfig } from "../config/index.ts";
-import type { RestaurantMetricsInput, ValidationFlag } from "../contracts/agent-input.ts";
+import type {
+  RestaurantMetricsInput,
+  ValidationFlag,
+} from "../contracts/agent-input.ts";
 import type { ConfidenceOverlay } from "../contracts/agent-output.ts";
 import { clamp, round } from "./scoring-utils.ts";
 import { selectPeerGroup } from "./peer-group-utils.ts";
@@ -16,7 +19,9 @@ export function buildRestaurantConfidenceOverlay(
 
   if (!selection.candidate) {
     confidence -= config.confidence.penalties.benchmarkMissing;
-    reasons.push("Sin benchmark confiable; la comparación relativa es limitada.");
+    reasons.push(
+      "Sin benchmark confiable; la comparación relativa es limitada.",
+    );
   } else if (selection.caution) {
     confidence -= config.confidence.penalties.benchmarkCaution;
     reasons.push(
@@ -52,10 +57,13 @@ export function buildRestaurantConfidenceOverlay(
 
   return {
     entityId: restaurant.restaurantId,
-    confidence: round(clamp(confidence * selection.confidence, config.confidence.minimum, 1)),
+    confidence: round(
+      clamp(confidence * selection.confidence, config.confidence.minimum, 1),
+    ),
     confidenceReason: reasons,
-    degradedByValidation: Boolean(relatedFlags.length || restaurant.quality?.degradedConfidence),
+    degradedByValidation: Boolean(
+      relatedFlags.length || restaurant.quality?.degradedConfidence,
+    ),
     relatedValidationFlags: relatedFlags,
   };
 }
-

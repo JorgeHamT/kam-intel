@@ -1,4 +1,8 @@
-import type { KamAssessment, NextBestAction, Recommendation } from "../contracts/agent-output.ts";
+import type {
+  KamAssessment,
+  NextBestAction,
+  Recommendation,
+} from "../contracts/agent-output.ts";
 
 function buildRecommendation(
   code: Recommendation["code"],
@@ -8,7 +12,10 @@ function buildRecommendation(
   return { code, label, rationale };
 }
 
-function buildNextStep(code: NextBestAction["code"], label: string): NextBestAction {
+function buildNextStep(
+  code: NextBestAction["code"],
+  label: string,
+): NextBestAction {
   return { code, label };
 }
 
@@ -23,7 +30,10 @@ export function recommendKamAction(assessment: KamAssessment): {
         "Escalar revisión del portfolio",
         "La presión está concentrada en varias cuentas relevantes del portfolio.",
       ),
-      nextStep: buildNextStep("escalate_portfolio", "Escalar revisión del portfolio"),
+      nextStep: buildNextStep(
+        "escalate_portfolio",
+        "Escalar revisión del portfolio",
+      ),
     };
   }
 
@@ -44,7 +54,9 @@ export function recommendKamAction(assessment: KamAssessment): {
       "Monitoreo del portfolio",
       "No hay presión sistémica fuerte en el portfolio del KAM.",
     ),
-    nextStep: buildNextStep("monitor_next_window", "Monitorear en la siguiente ventana"),
+    nextStep: buildNextStep(
+      "monitor_next_window",
+      "Monitorear en la siguiente ventana",
+    ),
   };
 }
-

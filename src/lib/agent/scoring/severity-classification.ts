@@ -2,7 +2,11 @@ import type { AgentConfig } from "../config/index.ts";
 import type { RiskStatus, SeverityLevel } from "../contracts/agent-input.ts";
 import type { Signal } from "../contracts/agent-output.ts";
 
-export function classifyStatus(priorityScore: number, signals: Signal[], config: AgentConfig): RiskStatus {
+export function classifyStatus(
+  priorityScore: number,
+  signals: Signal[],
+  config: AgentConfig,
+): RiskStatus {
   if (signals.some((signal) => signal.severityHint === "critical")) {
     return "critical";
   }
@@ -28,7 +32,10 @@ export function classifyStatus(priorityScore: number, signals: Signal[], config:
   return "stable";
 }
 
-export function classifySeverity(priorityScore: number, config: AgentConfig): SeverityLevel {
+export function classifySeverity(
+  priorityScore: number,
+  config: AgentConfig,
+): SeverityLevel {
   if (priorityScore >= config.thresholds.severity.high) {
     return "high";
   }
@@ -39,4 +46,3 @@ export function classifySeverity(priorityScore: number, config: AgentConfig): Se
 
   return "low";
 }
-

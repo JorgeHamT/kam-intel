@@ -34,4 +34,3 @@ export function toFixedMetric(value: number | null): string {
 
   return String(round(value));
 }
-
