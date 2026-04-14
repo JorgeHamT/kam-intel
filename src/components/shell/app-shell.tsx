@@ -11,7 +11,7 @@ type AppShellProps = {
 export function AppShell({ children }: AppShellProps) {
   return (
     <div className="min-h-screen bg-surface text-ink">
-      <div className="mx-auto flex min-h-screen max-w-[1600px]">
+      <div className="flex min-h-screen w-full">
         <Sidebar />
         <div className="min-h-screen flex-1 bg-[#f6f6f8]">
           <Header />

@@ -25,7 +25,7 @@ export function Header() {
               aria-label="Buscar en la demo"
               value=""
               readOnly
-              placeholder="Search accounts, KAMs, or cities..."
+              placeholder="Buscar cuentas, KAMs o ciudades..."
               className="w-full bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
             />
           </label>
@@ -37,7 +37,7 @@ export function Header() {
             className="inline-flex h-10 items-center justify-center gap-2 rounded-[10px] bg-[#17181b] px-4 text-xs font-semibold text-white"
           >
             <BoltIcon className="h-3.5 w-3.5" />
-            Run Analysis
+            Ejecutar análisis
           </button>
 
           <button
@@ -48,11 +48,11 @@ export function Header() {
             }}
             className="inline-flex h-10 items-center justify-center rounded-[10px] border border-transparent bg-transparent px-3 text-xs font-semibold text-slate-600 transition hover:text-[#17181b]"
           >
-            Reset Demo
+            Reiniciar demo
           </button>
 
           <label className="inline-flex h-10 items-center rounded-[10px] border border-transparent bg-transparent px-3 text-xs font-semibold text-slate-600">
-            <span className="mr-2">Scenario</span>
+            <span className="mr-2">Escenario</span>
             <select
               aria-label="Seleccionar escenario"
               value={scenario}
@@ -71,7 +71,7 @@ export function Header() {
             type="button"
             className="inline-flex h-10 items-center justify-center rounded-[10px] border border-transparent bg-transparent px-3 text-xs font-semibold text-[#f24d4f]"
           >
-            Send Alert
+            Enviar alerta
           </button>
 
           <button
