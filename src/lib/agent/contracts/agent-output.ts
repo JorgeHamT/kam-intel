@@ -64,6 +64,8 @@ export type ConfidenceOverlay = {
 };
 
 export type BenchmarkComparison = {
+  originalRiskLabel?: string | null;
+  validatedRiskLabel?: RiskStatus | null;
   peerGroupUsed?: string;
   peerGroupType?: PeerGroupType;
   peerGroupConfidence?: number;

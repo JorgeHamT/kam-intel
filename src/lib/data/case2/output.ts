@@ -6,6 +6,12 @@ import type {
   PortfolioAssessment,
   RestaurantAssessment,
 } from "../../agent/contracts/agent-output.ts";
+import {
+  CANONICAL_KPI_CONTRACT,
+  type CanonicalKpiContract,
+  getScenarioProjectionMetadata,
+  type ScenarioProjectionMetadata,
+} from "../../demo/kpi-contract.ts";
 
 import {
   buildCase2AgentBundle,
@@ -28,6 +34,8 @@ export type Case2OutputMetadata = {
     agentThresholds: true;
     agentRecommendations: true;
   };
+  semantics: CanonicalKpiContract;
+  projection: ScenarioProjectionMetadata;
 };
 
 export type Case2OutputValidation = {
@@ -53,6 +61,13 @@ export type Case2OutputBundle = {
   dataset: {
     metadata: Case2DatasetResult["metadata"];
     aggregates: Case2Aggregates;
+    restaurantMetadata: Record<
+      string,
+      {
+        city: string;
+        vertical: string;
+      }
+    >;
   };
   restaurants: RestaurantAssessment[];
   kams: KamAssessment[];
@@ -83,6 +98,15 @@ export function buildCase2OutputBundle(
   options: Case2AgentBundleOptions = {},
 ): Case2OutputBundle {
   const bundle = buildCase2AgentBundle(options);
+  const restaurantMetadata = Object.fromEntries(
+    bundle.dataset.rows.map((row) => [
+      row.restaurantId,
+      {
+        city: row.city,
+        vertical: row.vertical,
+      },
+    ]),
+  );
 
   return {
     metadata: {
@@ -94,10 +118,13 @@ export function buildCase2OutputBundle(
         agentThresholds: true,
         agentRecommendations: true,
       },
+      semantics: CANONICAL_KPI_CONTRACT,
+      projection: getScenarioProjectionMetadata("agent-evaluation"),
     },
     dataset: {
       metadata: bundle.dataset.metadata,
       aggregates: bundle.dataset.aggregates,
+      restaurantMetadata,
     },
     restaurants: bundle.result.restaurants,
     kams: bundle.result.kams,

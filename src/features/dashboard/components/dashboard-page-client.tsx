@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Eyebrow } from "@/components/shared/reference-primitives";
 import { createCase2DashboardViewModel } from "@/lib/data/case2/adapters";
 import type { Case2OutputBundle } from "@/lib/data/case2/output";
+import { coerceActiveScenario } from "@/lib/demo/options";
 import { usePresentationSnapshot } from "@/lib/demo/use-presentation-snapshot";
 import { useDemoStore } from "@/lib/store/demo-store";
 
@@ -16,13 +17,39 @@ export function DashboardPageClient({ baseOutput }: DashboardPageClientProps) {
   const snapshot = usePresentationSnapshot(baseOutput);
   const viewModel = createCase2DashboardViewModel(snapshot.bundle);
   const lastRefresh = useDemoStore((state) => state.lastRefresh);
-  const scenario = useDemoStore((state) => state.scenario);
+  const scenario = coerceActiveScenario(useDemoStore((state) => state.scenario));
 
   const cityRows = viewModel.cityRiskSummary.slice(0, 4);
   const totalCities = viewModel.cityRiskSummary.length;
   const verticalRows = viewModel.verticalRiskSummary.slice(0, 3);
   const topKams = viewModel.kamsUnderPressure.slice(0, 2);
-  const healthScore = (10 - viewModel.summary.averagePriorityScore / 12).toFixed(1);
+  const baseTotalRestaurants = baseOutput.global.dashboard.totalRestaurants;
+  const scenarioRestaurantCount = viewModel.summary.totalRestaurants;
+  const scenarioAtRiskRevenue = snapshot.bundle.restaurants
+    .filter(
+      (restaurant) =>
+        restaurant.status === "critical" || restaurant.status === "at_risk",
+    )
+    .reduce((sum, restaurant) => {
+      const aggregate = snapshot.bundle.dataset.aggregates.restaurants.find(
+        (item) => item.key === restaurant.restaurantId,
+      );
+      return sum + (aggregate?.sums.gmvProxy7d ?? 0);
+    }, 0);
+  const healthScore =
+    scenarioRestaurantCount > 0
+      ? Math.max(
+          0,
+          Math.min(
+            100,
+            ((viewModel.summary.stableCount * 100 +
+              viewModel.summary.atRiskCount * 50) /
+              scenarioRestaurantCount),
+          ),
+        )
+      : 0;
+  const healthTone =
+    healthScore >= 70 ? "healthy" : healthScore >= 45 ? "warning" : "critical";
   const highestPressureCity = [...cityRows].sort(
     (a, b) => b.averagePriorityScore - a.averagePriorityScore,
   )[0];
@@ -39,22 +66,15 @@ export function DashboardPageClient({ baseOutput }: DashboardPageClientProps) {
     scenario === "crisis"
       ? {
           tone: "critical" as const,
-          message: "Alerta crítica: se detectó presión operativa en cuentas prioritarias",
-          cta: "Ver detalle",
+          message: "Crisis operativa: se intensificó la presión visible en cuentas prioritarias",
         }
-      : scenario === "foco-kam"
-        ? {
-            tone: "critical" as const,
-            message: "Prioridad de intervención KAM en portafolios de alto riesgo",
-            cta: "Ver detalle",
-          }
-        : scenario === "discrepancias"
-          ? {
-              tone: "warning" as const,
-              message: "Se detectaron discrepancias de datos que requieren validación",
-              cta: "Revisar datos",
-            }
-          : null;
+      : null;
+  const scenarioMicrocopy =
+    scenario === "dataset-original"
+      ? "Clasificación visible tomada del archivo original."
+      : scenario === "agent-evaluation"
+        ? "Clasificación visible recalculada por el agente."
+        : null;
 
   return (
     <div className="space-y-6">
@@ -63,8 +83,16 @@ export function DashboardPageClient({ baseOutput }: DashboardPageClientProps) {
           className={`flex items-center justify-between rounded-[16px] px-5 py-3.5 ${
             bannerConfig.tone === "critical"
               ? "bg-brand text-white"
-              : "bg-[#fff2e1] text-[#7a5616]"
+              : "border text-[#5f231d] shadow-[0_10px_24px_rgba(187,88,78,0.16)]"
           }`}
+          style={
+            bannerConfig.tone === "critical"
+              ? undefined
+              : {
+                  backgroundColor: "#f5aba4",
+                  borderColor: "#e89189",
+                }
+          }
         >
           <div className="flex min-w-0 items-center gap-3">
             <span className="text-sm">{bannerConfig.tone === "critical" ? "⚠" : "●"}</span>
@@ -72,17 +100,6 @@ export function DashboardPageClient({ baseOutput }: DashboardPageClientProps) {
               {bannerConfig.message}
             </p>
           </div>
-
-          <button
-            type="button"
-            className={`rounded-full px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] ${
-              bannerConfig.tone === "critical"
-                ? "bg-white/15 text-white"
-                : "bg-white/70 text-[#7a5616]"
-            }`}
-          >
-            {bannerConfig.cta}
-          </button>
         </section>
       ) : null}
 
@@ -94,6 +111,11 @@ export function DashboardPageClient({ baseOutput }: DashboardPageClientProps) {
           <p className="mt-2 text-[15px] text-[#707784]">
             Seguimiento del riesgo operativo en cuentas y ciudades de LATAM.
           </p>
+          {scenarioMicrocopy ? (
+            <p className="mt-2 text-[12px] font-medium text-[#8b919d]">
+              {scenarioMicrocopy}
+            </p>
+          ) : null}
         </div>
 
         <div className="pt-1 text-right">
@@ -109,22 +131,28 @@ export function DashboardPageClient({ baseOutput }: DashboardPageClientProps) {
         style={{ gridTemplateColumns: "repeat(4, minmax(0, 1fr))" }}
       >
         <KpiCard
-          label="Total monitoreado"
-          value={viewModel.summary.totalRestaurants.toLocaleString()}
-          detail={`+${viewModel.summary.topAlertCount} este mes`}
+          label="Cuentas en seguimiento"
+          value={scenarioRestaurantCount.toLocaleString()}
+          detail={`de ${baseTotalRestaurants} cuentas del caso`}
         />
         <KpiCard
-          label="Riesgo crítico"
+          label="Casos críticos"
           value={`${viewModel.summary.criticalCount}`}
-          detail="Requiere atención inmediata"
+          detail={`${viewModel.summary.atRiskCount} adicionales en riesgo`}
           tone="critical"
         />
         <KpiCard
-          label="Exposición ingresos"
-          value={`$${viewModel.summary.averagePriorityScore.toFixed(1)}M`}
-          detail="Pérdida semanal estimada"
+          label="GMV en riesgo"
+          value={formatCompactCurrency(scenarioAtRiskRevenue)}
+          detail="Exposición visible · últimos 7 días"
         />
-        <KpiCard label="Salud promedio" value={healthScore} tone="health" />
+        <KpiCard
+          label="Presión del grupo priorizado"
+          value={healthScore.toFixed(1)}
+          detail={`${scenarioRestaurantCount} cuentas en seguimiento · intensidad compuesta`}
+          tone="health"
+          healthTone={healthTone}
+        />
       </section>
 
       <section
@@ -157,7 +185,7 @@ export function DashboardPageClient({ baseOutput }: DashboardPageClientProps) {
                   tone="amber"
                 />
                 <RegionalMetric
-                  label="Riesgo regional"
+                  label="Cobertura en presión"
                   value={`${regionalRiskShare}%`}
                   tone="brand"
                 />
@@ -184,7 +212,7 @@ export function DashboardPageClient({ baseOutput }: DashboardPageClientProps) {
               >
                 <span className="text-left">Ciudad</span>
                 <span className="text-center">Riesgo</span>
-                <span className="text-right">Ing.</span>
+                <span className="text-right">Score</span>
               </div>
 
               <div className="mt-1.5">
@@ -220,7 +248,7 @@ export function DashboardPageClient({ baseOutput }: DashboardPageClientProps) {
                       </span>
                     </span>
                     <span className="text-right font-medium text-[#555c67]">
-                      ${Math.round(city.averagePriorityScore * 4.5)}k
+                      {Math.round(city.averagePriorityScore)}
                     </span>
                   </div>
                 );
@@ -282,8 +310,7 @@ export function DashboardPageClient({ baseOutput }: DashboardPageClientProps) {
                       />
                     </div>
                     <p className="mt-1 text-xs text-[#a2a8b2]">
-                      Impacto semanal estimado: $
-                      {Math.round(vertical.averagePriorityScore * 1.8)}k
+                      Score promedio del vertical: {vertical.averagePriorityScore.toFixed(1)}
                     </p>
                   </div>
                 );
@@ -458,78 +485,54 @@ function DashboardSectionHeader({
   );
 }
 
-function getLowerPanelContent(scenario: string) {
+function getLowerPanelContent(
+  scenario: "dataset-original" | "agent-evaluation" | "crisis",
+) {
   switch (scenario) {
+    case "dataset-original":
+      return {
+        signals: [
+          "La lectura visible replica el semáforo con el que venía clasificado el archivo.",
+          "Sirve como baseline metodológico antes de aplicar la reevaluación del agente.",
+          "Permite contrastar qué cuentas cambian al reinterpretar el mismo caso.",
+        ],
+        reason:
+          "Este escenario prioriza el benchmark original del dataset para mostrar la clasificación heredada del Excel sin intensificar presión adicional.",
+        interventionLabel: "Referencia activa",
+        interventionBody:
+          "Se mantiene esta vista como baseline de comparación para contrastar la reclasificación posterior del agente.",
+        interventionTime: "Baseline del archivo",
+      };
+    case "agent-evaluation":
+      return {
+        signals: [
+          "La clasificación visible ya incorpora señales, peers y momentum.",
+          "El agente prioriza cuentas con deterioro compuesto aunque el benchmark original sea más conservador.",
+          "Esta lectura resume la interpretación operativa del sistema sobre el mismo caso.",
+        ],
+        reason:
+          "El dashboard refleja la reevaluación analítica del agente sobre el dataset completo y permite comparar benchmark original contra status recalculado.",
+        interventionLabel: "Lectura activa",
+        interventionBody:
+          "Se mantiene monitoreo priorizado sobre la reclasificación del agente para anticipar intervención en cuentas sensibles.",
+        interventionTime: "Motor del agente",
+      };
     case "crisis":
       return {
         signals: [
-          "Aumentó la presión operativa en cuentas prioritarias.",
-          "Se observa deterioro visible en indicadores recientes.",
-          "Se requiere seguimiento urgente sobre casos críticos.",
+          "Aumentó la presión operativa visible en cuentas prioritarias.",
+          "La exposición en riesgo y la urgencia de seguimiento se intensifican frente a la evaluación del agente.",
+          "La cola ejecutiva se reordena para reaccionar bajo estrés operativo.",
         ],
         reason:
-          "El escenario combina varias señales negativas al mismo tiempo y eleva la necesidad de intervención operativa inmediata.",
+          "La crisis operativa agrava el status y la prioridad sobre el universo completo para mostrar cómo responde la plataforma bajo mayor presión.",
         interventionLabel: "Acción realizada",
         interventionBody:
           "Se activó revisión urgente con seguimiento sobre las cuentas de mayor riesgo.",
         interventionTime: "Hace 14 h",
       };
-    case "foco-kam":
-      return {
-        signals: [
-          "La presión se concentra en cuentas prioritarias del portafolio.",
-          "La cartera del KAM requiere seguimiento más cercano.",
-          "Hay focos puntuales que justifican revisión inmediata.",
-        ],
-        reason:
-          "El sistema priorizó este escenario por la concentración de riesgo dentro de una cartera con alto impacto operativo.",
-        interventionLabel: "Acción realizada",
-        interventionBody:
-          "Se solicitó revisión del portafolio prioritario con el KAM responsable.",
-        interventionTime: "Hace 14 h",
-      };
-    case "discrepancias":
-      return {
-        signals: [
-          "Se detectaron inconsistencias entre indicadores clave.",
-          "Hay información pendiente de validación en cuentas relevantes.",
-          "Se requiere revisión de calidad antes de escalar alertas.",
-        ],
-        reason:
-          "El caso se señaló por diferencias de validación y consistencia de datos, no por una crisis operativa directa.",
-        interventionLabel: "Acción realizada",
-        interventionBody:
-          "Se abrió una revisión de calidad para validar la información antes de definir la prioridad final.",
-        interventionTime: "Hace 14 h",
-      };
-    case "estable":
-      return {
-        signals: [
-          "La operación se mantiene estable en las cuentas monitoreadas.",
-          "No se observan señales de presión relevante en este momento.",
-        ],
-        reason:
-          "El sistema mantiene seguimiento preventivo sobre la operación, sin señales que indiquen una alerta mayor.",
-        interventionLabel: "Acción realizada",
-        interventionBody:
-          "Se realizó una revisión preventiva para confirmar continuidad operativa sin hallazgos críticos.",
-        interventionTime: "Hace 14 h",
-      };
-    case "base":
     default:
-      return {
-        signals: [
-          "El monitoreo sigue activo sobre cuentas prioritarias.",
-          "Se observan señales leves que conviene seguir de cerca.",
-          "No hay presión crítica generalizada en el portafolio.",
-        ],
-        reason:
-          "El dashboard resume el contexto general de monitoreo y ayuda a detectar cambios tempranos antes de una intervención mayor.",
-        interventionLabel: "Acción realizada",
-        interventionBody:
-          "Se mantuvo seguimiento de rutina sobre cuentas prioritarias y revisión del comportamiento reciente.",
-        interventionTime: "Hace 14 h",
-      };
+      return getLowerPanelContent("agent-evaluation");
   }
 }
 
@@ -573,12 +576,27 @@ function KpiCard({
   value,
   detail,
   tone = "default",
+  healthTone = "healthy",
 }: {
   label: string;
   value: string;
   detail?: string;
   tone?: "default" | "critical" | "health";
+  healthTone?: "healthy" | "warning" | "critical";
 }) {
+  const healthValueClass =
+    healthTone === "critical"
+      ? "text-brand"
+      : healthTone === "warning"
+        ? "text-[#d68826]"
+        : "text-[#0b7b72]";
+  const healthTrackClass =
+    healthTone === "critical"
+      ? "bg-brand"
+      : healthTone === "warning"
+        ? "bg-[#f2ac4b]"
+        : "bg-[#0b7b72]";
+
   return (
     <article
       className={`rounded-[18px] border bg-white px-5 py-5 shadow-[0_8px_24px_rgba(20,20,24,0.05)] ${
@@ -597,13 +615,13 @@ function KpiCard({
             tone === "critical"
               ? "text-brand"
               : tone === "health"
-                ? "text-[#0b7b72]"
+                ? healthValueClass
                 : "text-[#17181b]"
           }`}
         >
           {value}
           {tone === "health" ? (
-            <span className="text-base text-[#8b919d]"> / 10</span>
+            <span className="text-base text-[#8b919d]"> / 100</span>
           ) : null}
         </p>
 
@@ -621,8 +639,8 @@ function KpiCard({
           <div className="mt-4 w-[140px]">
             <div className="h-2.5 overflow-hidden rounded-full bg-[#e8ebef]">
               <div
-                className="h-full rounded-full bg-[#0b7b72]"
-                style={{ width: "84%" }}
+                className={`h-full rounded-full ${healthTrackClass}`}
+                style={{ width: `${Math.max(0, Math.min(Number(value), 100))}%` }}
               />
             </div>
           </div>
@@ -630,4 +648,12 @@ function KpiCard({
       </div>
     </article>
   );
+}
+
+function formatCompactCurrency(value: number) {
+  if (value >= 1_000_000) {
+    return `$${(value / 1_000_000).toFixed(1)}M`;
+  }
+
+  return `$${Math.round(value / 1_000)}k`;
 }

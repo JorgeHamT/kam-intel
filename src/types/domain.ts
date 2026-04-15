@@ -1,9 +1,8 @@
 export type ScenarioId =
-  | "base"
+  | "dataset-original"
+  | "agent-evaluation"
   | "crisis"
-  | "discrepancias"
-  | "estable"
-  | "foco-kam";
+  ;
 
 export type HealthTone = "critical" | "warning" | "stable" | "info";
 

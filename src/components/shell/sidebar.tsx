@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BuildingOffice2Icon,
+  BuildingStorefrontIcon,
   BellAlertIcon,
   ChartBarSquareIcon,
   ClipboardDocumentCheckIcon,
@@ -16,16 +17,7 @@ import {
 import { cn } from "@/lib/utils/cn";
 import type { NavItem } from "@/types/domain";
 
-const navItems: Array<NavItem & { icon: typeof ChartBarSquareIcon }> = [
-  { href: "/", label: "Dashboard", icon: ChartBarSquareIcon },
-  { href: "/kams", label: "KAMs", icon: UserGroupIcon },
-  { href: "/alerts", label: "Alertas", icon: BellAlertIcon },
-  {
-    href: "/validation",
-    label: "Validación de datos",
-    icon: ClipboardDocumentCheckIcon,
-  },
-];
+const restaurantsHref = "/restaurants/R0008";
 
 const executiveItems = [
   { label: "Ciudades", icon: MapPinIcon, href: "/#ciudades-riesgo-operativo" },
@@ -34,6 +26,21 @@ const executiveItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const navItems: Array<NavItem & { icon: typeof ChartBarSquareIcon }> = [
+    { href: "/", label: "Dashboard", icon: ChartBarSquareIcon },
+    { href: "/kams", label: "KAMs", icon: UserGroupIcon },
+    {
+      href: restaurantsHref,
+      label: "Restaurantes",
+      icon: BuildingStorefrontIcon,
+    },
+    { href: "/alerts", label: "Alertas", icon: BellAlertIcon },
+    {
+      href: "/validation",
+      label: "Validación de datos",
+      icon: ClipboardDocumentCheckIcon,
+    },
+  ];
 
   return (
     <aside className="sticky top-0 hidden h-screen w-[228px] shrink-0 flex-col border-r border-[#e5e6eb] bg-[#fbfbfc] px-4 py-5 lg:flex">
@@ -49,7 +56,9 @@ export function Sidebar() {
       <nav className="mt-8 space-y-1.5">
         {navItems.map(({ href, label, icon: Icon }) => {
           const isActive =
-            pathname === href || (href !== "/" && pathname.startsWith(href));
+            pathname === href ||
+            (label === "Restaurantes" && pathname.startsWith("/restaurants")) ||
+            (href !== "/" && label !== "Restaurantes" && pathname.startsWith(href));
 
           return (
             <Link

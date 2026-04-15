@@ -4,13 +4,17 @@ import type {
   KamAssessment,
   RestaurantAssessment,
 } from "../../../agent/contracts/agent-output.ts";
+import type { Case2OutputBundle } from "../output.ts";
 import type { Case2NamedAggregate, Case2ValidationSummary } from "../types.ts";
 
 export type Case2DashboardViewModel = {
-  provisional: {
-    agentScoring: true;
-    agentThresholds: true;
-    agentRecommendations: true;
+  provisional: Case2OutputBundle["metadata"]["provisional"];
+  semantics: {
+    scenarioKind: Case2OutputBundle["metadata"]["projection"]["scenarioKind"];
+    universeKind: Case2OutputBundle["metadata"]["projection"]["universeKind"];
+    isGloballyComparable: Case2OutputBundle["metadata"]["projection"]["isGloballyComparable"];
+    visibleStatusSource: Case2OutputBundle["metadata"]["projection"]["visibleStatusSource"];
+    comparableKpiIds: Case2OutputBundle["metadata"]["projection"]["comparableKpiIds"];
   };
   summary: {
     totalRestaurants: number;
@@ -21,6 +25,27 @@ export type Case2DashboardViewModel = {
     topAlertCount: number;
     kamUnderPressureCount: number;
     averagePriorityScore: number;
+  };
+  globalStatus: {
+    portfolioStatus: Case2OutputBundle["global"]["portfolio"]["portfolioStatus"];
+    totalKams: number;
+    concentrationRiskCount: number;
+    isComparable: boolean;
+  };
+  spotlight: {
+    mode: "global_overview" | "focus_narrative";
+    hasFocusSubset: boolean;
+    restaurant?: RestaurantAssessment;
+  };
+  alerts: {
+    activeKind: Case2OutputBundle["metadata"]["projection"]["activeAlertKind"];
+    items: AlertFeedItem[];
+    summary: {
+      totalAlerts: number;
+      restaurantAlerts: number;
+      kamAlerts: number;
+      highSeverityAlerts: number;
+    };
   };
   topPriorityRestaurants: RestaurantAssessment[];
   kamsUnderPressure: Array<
@@ -75,6 +100,19 @@ export type Case2KamsListViewModel = {
     kam: KamAssessment;
     aggregate?: Case2NamedAggregate;
     restaurants: RestaurantAssessment[];
+    metrics: {
+      revenueAtRiskMxn: number;
+      healthScore: number;
+      pressurePct: number;
+      alertCount: number;
+      visiblePriorityScore: number;
+      portfolioMix: {
+        criticalCount: number;
+        atRiskCount: number;
+        stableCount: number;
+        totalCount: number;
+      };
+    };
   }>;
   ranking: Array<{
     kamId: string;
@@ -92,9 +130,23 @@ export type Case2KamDetailViewModel = {
   kam: KamAssessment;
   aggregate?: Case2NamedAggregate;
   restaurants: RestaurantAssessment[];
+  classifiedRestaurants: Array<{
+    restaurant: RestaurantAssessment;
+    displayStatus: "critical" | "at_risk" | "stable";
+    originalRiskLabel?: string | null;
+  }>;
   alerts: AlertFeedItem[];
   validationOverlays: AgentValidationOverlay[];
   portfolioBreakdown: KamAssessment["portfolioBreakdown"];
+  displayBreakdown: {
+    criticalCount: number;
+    atRiskCount: number;
+    stableCount: number;
+    totalCount: number;
+    revenueAtRiskMxn: number;
+    healthScore: number;
+    opsPressurePct: number;
+  };
 };
 
 export type Case2RestaurantDetailViewModel = {

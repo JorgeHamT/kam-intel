@@ -7,23 +7,41 @@ export function classifyStatus(
   signals: Signal[],
   config: AgentConfig,
 ): RiskStatus {
-  if (signals.some((signal) => signal.severityHint === "critical")) {
-    return "critical";
-  }
+  const criticalSignalCount = signals.filter(
+    (signal) => signal.severityHint === "critical",
+  ).length;
+  const hasAtRiskSignal = signals.some(
+    (signal) =>
+      signal.severityHint === "critical" || signal.severityHint === "at_risk",
+  );
+  const hasWatchlistSignal = signals.some(
+    (signal) =>
+      signal.severityHint === "critical" ||
+      signal.severityHint === "at_risk" ||
+      signal.severityHint === "watchlist",
+  );
 
   if (priorityScore >= config.thresholds.status.critical) {
     return "critical";
   }
 
   if (
-    signals.some((signal) => signal.severityHint === "at_risk") ||
+    criticalSignalCount >= 2 ||
+    (criticalSignalCount === 1 &&
+      priorityScore >= config.thresholds.status.atRisk)
+  ) {
+    return "critical";
+  }
+
+  if (
+    hasAtRiskSignal ||
     priorityScore >= config.thresholds.status.atRisk
   ) {
     return "at_risk";
   }
 
   if (
-    signals.some((signal) => signal.severityHint === "watchlist") ||
+    hasWatchlistSignal ||
     priorityScore >= config.thresholds.status.watchlist
   ) {
     return "watchlist";

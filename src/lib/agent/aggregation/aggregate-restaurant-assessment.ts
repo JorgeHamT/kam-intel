@@ -63,6 +63,8 @@ export function aggregateRestaurantAssessment(
   const benchmark: BenchmarkComparison | undefined =
     benchmarkSelection.candidate
       ? {
+          originalRiskLabel: restaurant.benchmark?.originalRiskLabel ?? null,
+          validatedRiskLabel: restaurant.benchmark?.validatedRiskLabel ?? null,
           peerGroupUsed: benchmarkSelection.candidate.key,
           peerGroupType: benchmarkSelection.candidate.type,
           peerGroupConfidence: benchmarkSelection.confidence,

@@ -5,6 +5,10 @@ import type {
 } from "../../../agent/contracts/agent-output.ts";
 import type { Case2OutputBundle } from "../output.ts";
 
+function normalizeRouteKey(value: string): string {
+  return decodeURIComponent(value).trim().toLowerCase();
+}
+
 export function sortByPriority<T extends { priorityScore: number }>(
   items: T[],
 ): T[] {
@@ -17,7 +21,15 @@ export function findKam(
   output: Case2OutputBundle,
   kamId: string,
 ): KamAssessment | undefined {
-  return output.kams.find((kam) => kam.kamId === kamId);
+  const target = normalizeRouteKey(kamId);
+
+  return output.kams.find((kam) => {
+    const candidates = [kam.kamId, kam.kamName].filter(
+      (value): value is string => Boolean(value),
+    );
+
+    return candidates.some((value) => normalizeRouteKey(value) === target);
+  });
 }
 
 export function findRestaurant(

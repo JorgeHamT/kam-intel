@@ -4,6 +4,8 @@ import test from "node:test";
 import { defaultAgentConfig } from "../config/index.ts";
 import { agentFixtures } from "../fixtures/agent-fixtures.ts";
 import { aggregateRestaurantAssessment } from "../aggregation/aggregate-restaurant-assessment.ts";
+import { createSignal } from "../signals/signal-rules.ts";
+import { classifyStatus } from "../scoring/severity-classification.ts";
 
 test("applies peer group fallback and degrades confidence with validation issues", () => {
   const restaurant = agentFixtures.restaurants[3];
@@ -58,4 +60,39 @@ test("classifies provisional severity bands", () => {
   assert.equal(critical.assessment.status, "critical");
   assert.equal(critical.assessment.severity, "high");
   assert.equal(stable.assessment.status, "stable");
+});
+
+test("requires compounded evidence before a critical signal override promotes to critical", () => {
+  const singleCriticalSignal = [
+    createSignal({
+      id: "absolute",
+      type: "absolute_deterioration",
+      label: "Deterioro absoluto",
+      severityHint: "critical",
+      evidence: [],
+    }),
+  ];
+  const compoundedCriticalSignals = [
+    createSignal({
+      id: "absolute",
+      type: "absolute_deterioration",
+      label: "Deterioro absoluto",
+      severityHint: "critical",
+      evidence: [],
+    }),
+    createSignal({
+      id: "relative",
+      type: "relative_deterioration",
+      label: "Deterioro relativo",
+      severityHint: "critical",
+      evidence: [],
+    }),
+  ];
+
+  assert.equal(classifyStatus(36, singleCriticalSignal, defaultAgentConfig), "at_risk");
+  assert.equal(classifyStatus(55, singleCriticalSignal, defaultAgentConfig), "critical");
+  assert.equal(
+    classifyStatus(36, compoundedCriticalSignals, defaultAgentConfig),
+    "critical",
+  );
 });
