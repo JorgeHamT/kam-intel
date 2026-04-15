@@ -70,7 +70,7 @@ export function RestaurantDetailPageClient({
 
   function formatCurrency(value: number) {
     try {
-      return `$${value.toLocaleString("es-CO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      return `$${value.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     } catch {
       return `$${value.toFixed(2)}`;
     }
