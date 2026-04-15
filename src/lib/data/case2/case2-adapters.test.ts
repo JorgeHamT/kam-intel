@@ -10,6 +10,7 @@ import {
   createCase2KamDetailViewModel,
   createCase2KamsListViewModel,
   createCase2RestaurantDetailViewModel,
+  createCase2RestaurantsListViewModel,
   createCase2ValidationViewModel,
 } from "./adapters/index.ts";
 
@@ -194,6 +195,19 @@ test("restaurant detail adapter resolves a real restaurant detail view model", (
   assert.ok(viewModel);
   assert.equal(viewModel.restaurant.restaurantId, restaurantId);
   assert.ok(viewModel.validationOverlay);
+});
+
+test("restaurants list adapter exposes the active scenario restaurant universe", () => {
+  const output = buildCase2OutputBundle();
+  const viewModel = createCase2RestaurantsListViewModel(output);
+
+  assert.equal(viewModel.summary.totalRestaurants, output.restaurants.length);
+  assert.equal(viewModel.restaurants.length, output.restaurants.length);
+  assert.equal(
+    viewModel.restaurants[0]?.restaurant.restaurantId,
+    "R0104",
+  );
+  assert.equal(viewModel.semantics.isGloballyComparable, true);
 });
 
 test("alerts adapter builds an alert feed view model with linked entities", () => {

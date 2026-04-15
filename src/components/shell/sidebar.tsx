@@ -15,7 +15,7 @@ import {
 import { cn } from "@/lib/utils/cn";
 import type { NavItem } from "@/types/domain";
 
-const restaurantsHref = "/restaurants/R0008";
+const restaurantsHref = "/restaurants";
 
 export function Sidebar() {
   const pathname = usePathname();

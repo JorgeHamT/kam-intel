@@ -158,6 +158,35 @@ export type Case2RestaurantDetailViewModel = {
   validationOverlay?: AgentValidationOverlay;
 };
 
+export type Case2RestaurantsListViewModel = {
+  provisional: Case2DashboardViewModel["provisional"];
+  semantics: Case2DashboardViewModel["semantics"];
+  summary: {
+    totalRestaurants: number;
+    criticalCount: number;
+    atRiskCount: number;
+    watchlistCount: number;
+    stableCount: number;
+  };
+  restaurants: Array<{
+    restaurant: RestaurantAssessment;
+    kam?: KamAssessment;
+    aggregate?: Case2NamedAggregate;
+    alert?: AlertFeedItem;
+    validationOverlay?: AgentValidationOverlay;
+    location: {
+      city: string;
+      vertical: string;
+    };
+    metrics: {
+      gmvProxy7d: number;
+      currentRating: number | null;
+      cancellationRatePct: number | null;
+      avgDeliveryTimeMin: number | null;
+    };
+  }>;
+};
+
 export type Case2AlertsFeedViewModel = {
   provisional: Case2DashboardViewModel["provisional"];
   summary: {
