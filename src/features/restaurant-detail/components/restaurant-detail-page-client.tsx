@@ -39,6 +39,12 @@ function formatMetricValue(value: number | null | undefined): string {
   return Number.isInteger(value) ? `${value}` : value.toFixed(1);
 }
 
+function formatPercent(value: number | null | undefined, suffix = "%") {
+  if (value === null || value === undefined) return "N/D";
+  // value is a percent already (e.g., 12.3) or a ratio 0-1? dataset uses percent values.
+  return Number.isInteger(value) ? `${value}${suffix}` : `${value.toFixed(1)}${suffix}`;
+}
+
 export function RestaurantDetailPageClient({
   baseOutput,
   restaurantId,
@@ -62,34 +68,79 @@ export function RestaurantDetailPageClient({
   const benchmark = restaurant.benchmark?.notableDeltas.slice(0, 3) ?? [];
   const riskScore = Math.round(restaurant.priorityScore);
 
+  function formatCurrency(value: number) {
+    try {
+      return `$${value.toLocaleString("es-CO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    } catch {
+      return `$${value.toFixed(2)}`;
+    }
+  }
+
+  function computeRevenueDropProxy() {
+    // Formula: max(ordenes_7d_anterior - ordenes_7d, 0) * valor_ticket_prom_mxn * 4
+    const prev = aggregate?.sums.orders7dPrevious;
+    const curr = aggregate?.sums.orders7d;
+    const avgTicket = aggregate?.averages.avgTicketMxn;
+
+    if (
+      prev == null ||
+      curr == null ||
+      avgTicket == null ||
+      typeof prev !== "number" ||
+      typeof curr !== "number" ||
+      typeof avgTicket !== "number"
+    ) {
+      return null;
+    }
+
+    const drop = Math.max(prev - curr, 0);
+    const monthly = drop * avgTicket * 4;
+    return monthly;
+  }
+
+  function computeOrdersDropPercent() {
+    // Formula: max(ordenes_7d_anterior - ordenes_7d, 0) / max(ordenes_7d_anterior, 1) * 100
+    const prev = aggregate?.sums.orders7dPrevious;
+    const curr = aggregate?.sums.orders7d;
+
+    if (prev == null || curr == null || typeof prev !== "number" || typeof curr !== "number") {
+      return null;
+    }
+
+    const drop = Math.max(prev - curr, 0);
+    const denom = Math.max(prev, 1);
+    const pct = (drop / denom) * 100;
+    return pct;
+  }
+
   return (
     <div className="space-y-5">
       <section className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <StatusBadge label="Critical alert" tone="critical" />
+            <StatusBadge label="Alerta crítica" tone="critical" />
             <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8b919d]">
-              Vertical: Gourmet · Bogota, Colombia
+              Vertical: {viewModel.location.vertical} · {viewModel.location.city}
             </span>
           </div>
-          <h1 className="mt-3 text-[3rem] font-semibold leading-none tracking-[-0.06em] text-[#17181b]">
+          <h1 className="mt-3 text-2xl font-semibold leading-tight tracking-tight text-[#17181b]">
             {restaurant.restaurantName ?? restaurant.restaurantId}
           </h1>
           <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-[#6c7380]">
-            <span>Key account manager</span>
+            <span>Responsable (KAM)</span>
             <span className="font-semibold text-[#17181b]">
-              {kam?.kamName ?? kam?.kamId ?? "Elena Rodriguez"}
+              {kam?.kamName ?? kam?.kamId ?? "No asignado"}
             </span>
           </div>
         </div>
 
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
-            <Eyebrow>Global risk score</Eyebrow>
+            <Eyebrow>Riesgo global</Eyebrow>
             <div className="mt-1 text-right">
-              <p className="text-[4rem] font-semibold leading-none tracking-[-0.07em] text-brand">
+              <p className="text-4xl font-semibold leading-none tracking-tight text-brand">
                 {riskScore}
-                <span className="text-[2rem] text-[#8b919d]">/100</span>
+                <span className="text-sm text-[#8b919d]">/100</span>
               </p>
               <ProgressBar className="mt-4 h-2.5" value={riskScore} />
             </div>
@@ -98,26 +149,48 @@ export function RestaurantDetailPageClient({
       </section>
 
       <div className="grid gap-4 xl:grid-cols-7">
-        <MetricTile label="Rating" value={formatMetricValue(aggregate?.averages.currentRating)} detail="-0.4%" />
-        <MetricTile label="Cancellations" value={`${formatMetricValue(aggregate?.averages.cancellationRatePct)}%`} accent="brand" />
-        <MetricTile label="Avg delivery" value={`${formatMetricValue(aggregate?.averages.avgDeliveryTimeMin)}m`} />
-        <MetricTile label="Complaints" value="High intensity" accent="brand" />
-        <MetricTile label="NPS" value="18" />
-        <MetricTile label="Orders Δ" value="-15%" accent="brand" />
-        <MetricTile label="Revenue risk" value={`$${Math.round(restaurant.priorityScore * 460)}`} detail="" accent="brand" />
+        <MetricTile
+          label="Calificación"
+          value={formatMetricValue(aggregate?.averages.currentRating)}
+          detail={aggregate?.averages.rating30dAvg ? `${formatMetricValue(aggregate.averages.rating30dAvg)} 30d` : undefined}
+        />
+        <MetricTile
+          label="Cancelaciones"
+          value={aggregate?.averages.cancellationRatePct != null ? `${formatMetricValue(aggregate.averages.cancellationRatePct)}%` : "N/D"}
+          accent="brand"
+        />
+        <MetricTile
+          label="Entrega promedio (min)"
+          value={aggregate?.averages.avgDeliveryTimeMin != null ? `${formatMetricValue(aggregate.averages.avgDeliveryTimeMin)}m` : "N/D"}
+        />
+        <MetricTile
+          label="Quejas (7d)"
+          value={aggregate?.sums.complaints7d != null ? `${aggregate.sums.complaints7d}` : "N/D"}
+          accent="brand"
+        />
+        <MetricTile label="NPS" value={aggregate?.averages.npsScore != null ? `${formatMetricValue(aggregate.averages.npsScore)}` : "N/D"} />
+        <MetricTile
+          label="Var. órdenes"
+          value={aggregate?.averages.ordersVariancePctRecalc != null ? formatPercent(aggregate.averages.ordersVariancePctRecalc) : "N/D"}
+          accent="brand"
+        />
+        <MetricTile label="Caída estimada de ingresos (4 semanas)" value={(() => {
+          const v = computeRevenueDropProxy();
+          return v == null ? "N/D" : formatCurrency(v);
+        })()} detail="Proxy basada en órdenes y ticket promedio" accent="brand" />
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[1.12fr_0.88fr]">
         <div className="space-y-5">
           <ReferenceCard className="p-0">
             <div className="flex items-center justify-between rounded-t-[24px] bg-[#17181b] px-5 py-4 text-white">
-              <h2 className="text-xl font-semibold">Operational Diagnosis</h2>
-              <p className="text-xs text-white/60">Analysis completed 08:14 AM</p>
+              <h2 className="text-xl font-semibold">Diagnóstico Operativo</h2>
+              <p className="text-xs text-white/60">Análisis finalizado 08:14 AM</p>
             </div>
             <div className="grid gap-4 p-5 lg:grid-cols-[1.08fr_0.92fr]">
               <div className="space-y-4">
                 <div className="rounded-[18px] border border-[#ececf1] p-4">
-                  <Eyebrow tone="brand">Signals detected</Eyebrow>
+                  <Eyebrow tone="brand">Señales detectadas</Eyebrow>
                   <div className="mt-3 space-y-3">
                     {restaurant.whyFlagged.slice(0, 2).map((reason) => (
                       <div key={reason} className="border-l-2 border-brand pl-3">
@@ -128,31 +201,31 @@ export function RestaurantDetailPageClient({
                 </div>
 
                 <div className="rounded-[18px] border border-[#ececf1] p-4">
-                  <Eyebrow tone="brand">Recommended action</Eyebrow>
+                  <Eyebrow tone="brand">Acción recomendada</Eyebrow>
                   <ul className="mt-3 space-y-2 text-sm text-[#4f5662]">
-                    <li>• {restaurant.recommendedAction.label}</li>
-                    <li>• Review kitchen capacity before peak hour dispatch.</li>
+                    <li>• {restaurant.recommendedAction?.label ?? "Sin acción definida"}</li>
+                    {restaurant.recommendedAction?.label ? (
+                      <li>• Revisar operaciones y priorizar contacto con KAM.</li>
+                    ) : null}
                   </ul>
                 </div>
               </div>
 
               <div className="space-y-4">
                 <div className="rounded-[18px] bg-[#f7f7f9] p-4">
-                  <Eyebrow>Why flagged</Eyebrow>
-                  <p className="mt-3 text-sm italic leading-6 text-[#676f7c]">
-                    {firstSentence(restaurant.businessSummary)}
-                  </p>
-                  <ProgressBar className="mt-4" value={85} />
-                  <p className="mt-2 text-xs text-[#8b919d]">Churn probability: 85%</p>
+                  <Eyebrow>Motivo de alerta</Eyebrow>
+                  <p className="mt-3 text-sm italic leading-6 text-[#676f7c]">{firstSentence(restaurant.businessSummary)}</p>
+                  <ProgressBar className="mt-4" value={riskScore} />
+                  <p className="mt-2 text-xs text-[#8b919d]">Puntaje de prioridad: {riskScore}/100</p>
                 </div>
 
                 <div className="rounded-[18px] p-4">
-                  <Eyebrow>Next best step</Eyebrow>
+                  <Eyebrow>Siguiente paso</Eyebrow>
                   <button
                     type="button"
                     className="mt-4 w-full rounded-[12px] bg-brand px-4 py-3 text-sm font-semibold text-white"
                   >
-                    Schedule KAM Visit
+                    Agendar Visita KAM
                   </button>
                 </div>
               </div>
@@ -161,37 +234,34 @@ export function RestaurantDetailPageClient({
 
           <div className="grid gap-5 lg:grid-cols-2">
             <ReferenceCard>
-              <h2 className="text-lg font-semibold text-[#17181b]">Market Benchmark</h2>
-              <div className="mt-4 space-y-5">
+              <h2 className="text-lg font-semibold text-[#17181b]">Benchmark de mercado</h2>
+              <div className="mt-4 space-y-4">
                 {benchmark.map((item) => {
-                  const width = Math.min(
-                    100,
-                    Math.max(18, Math.abs(item.deltaToMedian ?? 0) * 8),
-                  );
+                  const width = Math.min(100, Math.max(18, Math.abs(item.deltaToMedian ?? 0) * 8));
+                  const labelMap: Record<string, string> = {
+                    currentRating: "Cambio en calificación",
+                    deltaRatingRecalc: "Cambio en calificación",
+                    varOrdenesPctRecalc: "Variación de órdenes",
+                    cancellationRatePct: "Tasa de cancelación",
+                    avgDeliveryTimeMin: "Tiempo de entrega (min)",
+                    complaints7d: "Quejas (7d)",
+                    npsScore: "NPS",
+                    gmvProxy7d: "GMV (7d)",
+                  };
+
+                  const humanLabel = labelMap[item.metric] ?? item.metric.replace(/[_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
                   return (
                     <div key={item.metric}>
                       <div className="flex items-center justify-between text-sm">
-                        <span className="font-semibold text-[#5a6270]">{item.metric}</span>
-                        <span className="font-semibold text-brand">
-                          {formatMetricValue(item.deltaToMedian)}
-                        </span>
+                        <span className="font-semibold text-[#5a6270]">{humanLabel}</span>
+                        <span className="font-semibold text-brand">{item.deltaToMedian == null ? "N/D" : formatMetricValue(item.deltaToMedian)}</span>
                       </div>
                       <ProgressBar className="mt-2" value={width} />
+                      <p className="mt-2 text-xs text-[#8b919d]">Diferencia respecto a la mediana: {item.deltaToMedian == null ? "Sin dato" : formatMetricValue(item.deltaToMedian)}</p>
                     </div>
                   );
                 })}
-              </div>
-            </ReferenceCard>
-
-            <ReferenceCard>
-              <h2 className="text-lg font-semibold text-[#17181b]">Focus Area</h2>
-              <div className="relative mt-4 h-[220px] rounded-[18px] bg-[#f2f2f4]">
-                <div className="absolute inset-0 rounded-[18px] bg-[radial-gradient(circle_at_60%_65%,rgba(255,255,255,0.7),transparent_18%),linear-gradient(180deg,rgba(255,255,255,0.4),rgba(0,0,0,0.02))]" />
-                <span className="absolute left-[48%] top-[56%] h-4 w-4 rounded-full bg-brand ring-4 ring-brand/20" />
-                <p className="absolute right-4 top-4 text-[11px] font-medium text-[#8b919d]">
-                  Chapinero Alto
-                </p>
               </div>
             </ReferenceCard>
           </div>
@@ -199,48 +269,57 @@ export function RestaurantDetailPageClient({
 
         <div className="space-y-5">
           <ReferenceCard>
-            <Eyebrow>Financial impact</Eyebrow>
+            <Eyebrow>Impacto financiero</Eyebrow>
             <div className="mt-3 flex items-start justify-between gap-4">
               <div>
-                <p className="text-[3rem] font-semibold leading-none tracking-[-0.05em] text-brand">
-                  ${Math.round(restaurant.priorityScore * 460)}
+                <p className="text-4xl font-semibold leading-none tracking-tight text-brand">
+                  {(() => {
+                    const v = computeRevenueDropProxy();
+                    return v == null ? "N/D" : formatCurrency(v);
+                  })()}
                 </p>
-                <p className="mt-1 text-sm text-[#8b919d]">/mo</p>
+                <p className="mt-1 text-sm text-[#8b919d]">Proxy basada en órdenes y ticket promedio</p>
                 <p className="mt-3 text-sm leading-6 text-[#5d6470]">
-                  Revenue leakage due to delivery friction and unresolved churn.
+                  Estimación mensual basada en la caída de órdenes y el ticket promedio.
                 </p>
               </div>
-              <div
-                className="relative flex h-28 w-28 items-center justify-center rounded-full"
-                style={{
-                  background: "conic-gradient(#f24d4f 0 75%, #f1f2f5 75% 100%)",
-                }}
-              >
-                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white text-xl font-semibold text-[#17181b]">
-                  75%
-                </div>
-              </div>
+              {(() => {
+                const pct = computeOrdersDropPercent();
+                const safePct = pct == null ? 0 : Math.min(100, Math.max(0, pct));
+                const bg = `conic-gradient(#f24d4f 0 ${safePct}%, #f1f2f5 ${safePct}% 100%)`;
+
+                return (
+                  <div
+                    className="relative flex h-28 w-28 items-center justify-center rounded-full"
+                    style={{ background: bg }}
+                  >
+                    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white text-xl font-semibold text-[#17181b]">
+                      {pct == null ? "N/D" : (Number.isInteger(pct) ? `${Math.round(pct)}%` : `${pct.toFixed(1)}%`)}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
             <div className="mt-4 space-y-2">
-              <DotLegend color="#f24d4f" label="Operational friction" />
-              <DotLegend color="#f1b14e" label="Market attrition" />
+              <DotLegend color="#f24d4f" label="Fricción operativa" />
+              <DotLegend color="#f1b14e" label="Deserción de mercado" />
             </div>
           </ReferenceCard>
 
           <ReferenceCard>
-            <h2 className="text-lg font-semibold text-[#17181b]">Executive Summary</h2>
+            <h2 className="text-lg font-semibold text-[#17181b]">Resumen Ejecutivo</h2>
             <div className="mt-4 space-y-3 text-sm leading-6 text-[#5d6470]">
               <p>{restaurant.businessSummary}</p>
               {alert ? (
                 <p>
-                  Current alert score {Math.round(alert.priorityScore)} suggests immediate KAM
-                  intervention.
+                  El puntaje actual de {Math.round(alert.priorityScore)} sugiere una intervención
+                  inmediata del KAM.
                 </p>
               ) : null}
               {validationOverlay ? (
                 <div className="rounded-[16px] bg-[#f7f7f9] p-4">
                   <div className="flex items-center justify-between gap-3">
-                    <p className="font-semibold text-[#17181b]">Validation overlay</p>
+                    <p className="font-semibold text-[#17181b]">Capa de validación</p>
                     <StatusBadge
                       label={validationOverlay.degradedByValidation ? "Confianza degradada" : "Sin degradación"}
                       tone={
@@ -255,14 +334,7 @@ export function RestaurantDetailPageClient({
             </div>
           </ReferenceCard>
 
-          <div className="flex justify-end">
-            <button
-              type="button"
-              className="flex h-14 w-14 items-center justify-center rounded-full bg-brand text-3xl text-white"
-            >
-              +
-            </button>
-          </div>
+          <div className="flex justify-end" />
         </div>
       </div>
 

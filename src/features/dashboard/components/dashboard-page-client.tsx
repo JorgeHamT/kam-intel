@@ -20,7 +20,6 @@ export function DashboardPageClient({ baseOutput }: DashboardPageClientProps) {
   const scenario = coerceActiveScenario(useDemoStore((state) => state.scenario));
 
   const cityRows = viewModel.cityRiskSummary.slice(0, 4);
-  const totalCities = viewModel.cityRiskSummary.length;
   const verticalRows = viewModel.verticalRiskSummary.slice(0, 3);
   const topKams = viewModel.kamsUnderPressure.slice(0, 2);
   const baseTotalRestaurants = baseOutput.global.dashboard.totalRestaurants;

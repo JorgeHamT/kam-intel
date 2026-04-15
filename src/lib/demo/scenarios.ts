@@ -383,8 +383,7 @@ function buildScenarioAlerts(params: {
   return buildAlertFeed({
     restaurants: params.restaurants,
     kams: params.kams,
-    topRestaurantCount: config.thresholds.alerts.topRestaurantCount,
-    topKamCount: config.thresholds.alerts.topKamCount,
+    maxVisibleCount: config.thresholds.alerts.maxVisibleCount,
   });
 }
 

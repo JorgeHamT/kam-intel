@@ -69,6 +69,32 @@ function getRole(portfolioSize: number) {
   return "KAM de portafolio";
 }
 
+function translateSignalType(value: string) {
+  const map: Record<string, string> = {
+    absolute_deterioration: "Deterioro absoluto",
+    relative_deterioration: "Deterioro relativo",
+    accelerated_deterioration: "Deterioro acelerado",
+    compound_risk: "Riesgo compuesto",
+    business_impact: "Impacto de negocio",
+    data_quality_risk: "Calidad del dato",
+    concentration_risk: "Concentración de riesgo",
+  };
+
+  return map[value] ?? value.replaceAll("_", " ");
+}
+
+function getKamSignalStatusLabel(status: Parameters<typeof getRiskStatusLabel>[0]) {
+  if (status === "watchlist") {
+    return "Monitoreo";
+  }
+
+  return getRiskStatusLabel(status);
+}
+
+function getKamSignalStatusTone(status: Parameters<typeof getRiskStatusTone>[0]) {
+  return getRiskStatusTone(status);
+}
+
 function KpiCard({
   label,
   value,
@@ -277,9 +303,9 @@ export function KamDetailPageClient({
           detail="Últimos 7 días"
         />
         <KpiCard
-          label="Salud del portafolio"
-          value={`${healthValue.toFixed(1)} / 100`}
-          detail="Score compuesto · últimos 7 días"
+          label="Prioridad del KAM"
+          value={formatScore(kam.priorityScore)}
+          detail={`Salud del portafolio ${healthValue.toFixed(1)} / 100`}
         />
         <KpiCard
           label="Presión operativa"
@@ -347,7 +373,7 @@ export function KamDetailPageClient({
                 </div>
                 <button
                   type="button"
-                  className="inline-flex h-10 items-center justify-center rounded-[12px] bg-[#171b24] px-5 text-[10px] font-semibold uppercase tracking-[0.16em] text-white"
+                  className="inline-flex min-h-[40px] items-center justify-center rounded-[12px] bg-[#171b24] px-5 py-2 text-center text-[10px] font-semibold uppercase leading-none tracking-[0.16em] text-white"
                 >
                   Tomar acción
                 </button>
@@ -515,16 +541,25 @@ export function KamDetailPageClient({
                               : "text-[#14c38e]"
                         }`}
                       >
-                        {signal.type.replaceAll("_", " ")}
+                        {translateSignalType(signal.type)}
                       </p>
                       <p className="mt-1.5 text-sm font-semibold leading-5 text-white">
                         {signal.label}
                       </p>
                     </div>
-                    <StatusBadge
-                      label={getRiskStatusLabel(signal.severityHint)}
-                      tone={getRiskStatusTone(signal.severityHint)}
-                    />
+                    <span
+                      className={`inline-flex min-h-[28px] shrink-0 items-center justify-center rounded-full px-3 py-1 text-center text-[10px] font-semibold uppercase leading-none tracking-[0.14em] ring-1 ring-inset ${
+                        getKamSignalStatusTone(signal.severityHint) === "critical"
+                          ? "bg-[#fff0f0] text-[#f24d4f] ring-[#ffd0d2]"
+                          : getKamSignalStatusTone(signal.severityHint) === "warning"
+                            ? "bg-[#fff6ea] text-[#c87a1f] ring-[#f5dcc0]"
+                            : getKamSignalStatusTone(signal.severityHint) === "stable"
+                              ? "bg-[#eef8f2] text-[#1f8b5b] ring-[#cae8d8]"
+                              : "bg-[#f3f3f6] text-[#5d6470] ring-[#e3e4e9]"
+                      }`}
+                    >
+                      {getKamSignalStatusLabel(signal.severityHint)}
+                    </span>
                   </div>
                   <p className="mt-2 text-xs leading-5 text-white/68">
                     {signal.evidence[0]?.note ??

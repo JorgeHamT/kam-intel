@@ -127,8 +127,7 @@ export function runAgent(
   const alerts = buildAlertFeed({
     restaurants: restaurantAssessments,
     kams: kamAssessments,
-    topRestaurantCount: config.thresholds.alerts.topRestaurantCount,
-    topKamCount: config.thresholds.alerts.topKamCount,
+    maxVisibleCount: config.thresholds.alerts.maxVisibleCount,
   });
 
   const summary = aggregateDashboardSummary({

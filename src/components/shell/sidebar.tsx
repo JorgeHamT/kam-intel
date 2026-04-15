@@ -98,7 +98,7 @@ export function Sidebar() {
 
 function RappiLogoMark() {
   return (
-    <div className="pt-1">
+    <Link href="/" className="block pt-1" aria-label="Ir al inicio">
       <Image
         src="/Rappi_logo.svg"
         alt="Rappi"
@@ -107,6 +107,6 @@ function RappiLogoMark() {
         className="h-9 w-auto object-contain"
         priority
       />
-    </div>
+    </Link>
   );
 }

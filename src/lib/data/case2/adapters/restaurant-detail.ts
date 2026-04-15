@@ -17,6 +17,11 @@ export function createCase2RestaurantDetailViewModel(
   if (!restaurant) {
     return null;
   }
+  const meta = output.dataset.restaurantMetadata[restaurant.restaurantId];
+  const location = {
+    city: meta?.city ?? "Sin dato",
+    vertical: meta?.vertical ?? "Sin dato",
+  };
 
   return {
     provisional: getProvisionalFlags(output),
@@ -31,5 +36,6 @@ export function createCase2RestaurantDetailViewModel(
         alert.entityId === restaurant.restaurantId,
     ),
     validationOverlay: findValidationOverlay(output, restaurant.restaurantId),
+    location,
   };
 }

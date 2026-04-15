@@ -156,6 +156,10 @@ export type Case2RestaurantDetailViewModel = {
   aggregate?: Case2NamedAggregate;
   alert?: AlertFeedItem;
   validationOverlay?: AgentValidationOverlay;
+  location: {
+    city: string;
+    vertical: string;
+  };
 };
 
 export type Case2RestaurantsListViewModel = {

@@ -2,33 +2,6 @@ import type { Case2OutputBundle } from "../output.ts";
 import type { Case2KamDetailViewModel } from "./types.ts";
 import { findKam, findValidationOverlay, getProvisionalFlags } from "./helpers.ts";
 
-function normalizeOriginalRiskLabel(
-  value: string | null | undefined,
-): "critical" | "at_risk" | "stable" | null {
-  if (!value) {
-    return null;
-  }
-
-  const normalized = value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
-
-  if (normalized.includes("critico")) {
-    return "critical";
-  }
-
-  if (normalized.includes("riesgo")) {
-    return "at_risk";
-  }
-
-  if (normalized.includes("estable")) {
-    return "stable";
-  }
-
-  return null;
-}
-
 export function createCase2KamDetailViewModel(
   output: Case2OutputBundle,
   kamId: string,
@@ -47,10 +20,8 @@ export function createCase2KamDetailViewModel(
   );
   const classifiedRestaurants = restaurants.map((restaurant) => {
     const originalRiskLabel = restaurant.benchmark?.originalRiskLabel ?? null;
-    const originalStatus = normalizeOriginalRiskLabel(originalRiskLabel);
     const displayStatus =
-      originalStatus ??
-      (restaurant.status === "watchlist" ? "at_risk" : restaurant.status);
+      restaurant.status === "watchlist" ? "at_risk" : restaurant.status;
 
     return {
       restaurant,

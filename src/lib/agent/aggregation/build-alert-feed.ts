@@ -8,13 +8,11 @@ import { recommendKamAction } from "../recommendations/recommend-kam-action.ts";
 export function buildAlertFeed(params: {
   restaurants: RestaurantAssessment[];
   kams: KamAssessment[];
-  topRestaurantCount: number;
-  topKamCount: number;
+  maxVisibleCount: number;
 }): AlertFeedItem[] {
   const restaurantAlerts = params.restaurants
     .filter((restaurant) => restaurant.status !== "stable")
     .sort((left, right) => right.priorityScore - left.priorityScore)
-    .slice(0, params.topRestaurantCount)
     .map<AlertFeedItem>((restaurant) => ({
       alertId: `restaurant-${restaurant.restaurantId}`,
       entityType: "restaurant",
@@ -34,7 +32,6 @@ export function buildAlertFeed(params: {
   const kamAlerts = params.kams
     .filter((kam) => kam.portfolioStatus !== "stable")
     .sort((left, right) => right.priorityScore - left.priorityScore)
-    .slice(0, params.topKamCount)
     .map<AlertFeedItem>((kam) => {
       const recommendation = recommendKamAction(kam);
       return {
@@ -57,7 +54,17 @@ export function buildAlertFeed(params: {
       };
     });
 
-  return [...restaurantAlerts, ...kamAlerts].sort(
-    (left, right) => right.priorityScore - left.priorityScore,
-  );
+  const severityWeight = {
+    high: 3,
+    medium: 2,
+    low: 1,
+  } as const;
+
+  return [...restaurantAlerts, ...kamAlerts]
+    .sort(
+      (left, right) =>
+        severityWeight[right.severity] - severityWeight[left.severity] ||
+        right.priorityScore - left.priorityScore,
+    )
+    .slice(0, params.maxVisibleCount);
 }

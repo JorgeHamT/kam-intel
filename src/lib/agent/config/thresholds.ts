@@ -47,8 +47,7 @@ export const agentThresholds = {
     },
   },
   alerts: {
-    topRestaurantCount: 8,
-    topKamCount: 4,
+    maxVisibleCount: 10,
   },
 } as const;
 

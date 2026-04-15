@@ -51,11 +51,11 @@ test("builds an alert feed for restaurants and KAMs", () => {
   const alerts = buildAlertFeed({
     restaurants: restaurantAssessments,
     kams: [kamAssessment],
-    topRestaurantCount: 8,
-    topKamCount: 4,
+    maxVisibleCount: 10,
   });
 
   assert.ok(alerts.length > 0);
+  assert.ok(alerts.length <= 10);
   assert.ok(alerts.some((alert) => alert.entityType === "restaurant"));
   assert.ok(alerts.some((alert) => alert.entityType === "kam"));
 });

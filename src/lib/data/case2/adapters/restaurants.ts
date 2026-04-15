@@ -10,11 +10,16 @@ function sortRestaurantsForIndex(
   restaurants: Case2OutputBundle["restaurants"],
 ) {
   return [...restaurants].sort((left, right) => {
+    // Sort by priority score descending so the most critical restaurants
+    // surface first.  This also makes the list order scenario-reactive:
+    // when the scenario changes, projected scores shift and the ranking
+    // reorders visibly.
     return (
+      right.priorityScore - left.priorityScore ||
       (left.restaurantName ?? left.restaurantId).localeCompare(
         right.restaurantName ?? right.restaurantId,
         "es",
-      ) || left.restaurantId.localeCompare(right.restaurantId, "es")
+      )
     );
   });
 }

@@ -14,6 +14,8 @@ import { usePresentationSnapshot } from "@/lib/demo/use-presentation-snapshot";
 import {
   getRiskStatusLabel,
   getRiskStatusTone,
+  getSeverityLabel,
+  getSeverityTone,
   getValidationSeverityTone,
 } from "@/features/shared/agent-presentation";
 
@@ -109,6 +111,10 @@ export function RestaurantsPageClient({
                         label={getRiskStatusLabel(item.restaurant.status)}
                         tone={getRiskStatusTone(item.restaurant.status)}
                       />
+                      <StatusBadge
+                        label={getSeverityLabel(item.restaurant.severity)}
+                        tone={getSeverityTone(item.restaurant.severity)}
+                      />
                       {item.validationOverlay ? (
                         <StatusBadge
                           label={
@@ -140,10 +146,14 @@ export function RestaurantsPageClient({
                     </p>
                   </div>
 
-                  <div className="grid gap-3 sm:grid-cols-2 xl:min-w-[420px] xl:grid-cols-4">
+                  <div className="grid gap-3 sm:grid-cols-2 xl:min-w-[520px] xl:grid-cols-5">
                     <MiniMetric
                       label="Score"
                       value={`${Math.round(item.restaurant.priorityScore)}/100`}
+                    />
+                    <MiniMetric
+                      label="Severidad"
+                      value={getSeverityLabel(item.restaurant.severity)}
                     />
                     <MiniMetric
                       label="GMV 7d"

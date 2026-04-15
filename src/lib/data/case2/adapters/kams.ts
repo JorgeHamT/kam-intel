@@ -11,7 +11,7 @@ function getProjectedStatus(
 function getDisplayStatus(
   restaurant: Case2OutputBundle["restaurants"][number],
 ): "critical" | "at_risk" | "stable" {
-  return restaurant.status === "watchlist" ? "stable" : restaurant.status;
+  return restaurant.status === "watchlist" ? "at_risk" : restaurant.status;
 }
 
 function roundTo(value: number, digits = 2) {
@@ -41,6 +41,8 @@ export function createCase2KamsListViewModel(
   output: Case2OutputBundle,
   baselineOutput: Case2OutputBundle = output,
 ): Case2KamsListViewModel {
+  void baselineOutput;
+
   return {
     provisional: getProvisionalFlags(output),
     summary: {
@@ -66,13 +68,7 @@ export function createCase2KamsListViewModel(
       totalAlerts: output.alerts.length,
     },
     cards: output.kams.map((kam) => {
-      const baselineKam = baselineOutput.kams.find(
-        (candidate) => candidate.kamId === kam.kamId,
-      );
       const restaurants = output.restaurants.filter(
-        (restaurant) => restaurant.kamId === kam.kamId,
-      );
-      const baselineRestaurants = baselineOutput.restaurants.filter(
         (restaurant) => restaurant.kamId === kam.kamId,
       );
       const classifiedRestaurants = restaurants.map((restaurant) => {
@@ -86,19 +82,12 @@ export function createCase2KamsListViewModel(
         (item) => item.projectedStatus === "critical",
       );
       const atRiskRestaurants = classifiedRestaurants.filter(
-        (item) => item.projectedStatus === "at_risk",
+        (item) => item.displayStatus === "at_risk",
       );
-      const stableLikeCount = classifiedRestaurants.filter(
+      const stableCount = classifiedRestaurants.filter(
         (item) => item.displayStatus === "stable",
       ).length;
-      const totalCount = Math.max(
-        baselineRestaurants.length || baselineKam?.portfolioSize || restaurants.length,
-        1,
-      );
-      const visibleStableCount = Math.max(
-        totalCount - criticalRestaurants.length - atRiskRestaurants.length,
-        stableLikeCount,
-      );
+      const totalCount = Math.max(restaurants.length, 1);
       const pressurePct =
         totalCount > 0
           ? roundTo(
@@ -109,8 +98,7 @@ export function createCase2KamsListViewModel(
       const healthScore =
         totalCount > 0
           ? roundTo(
-              (visibleStableCount * 100 + atRiskRestaurants.length * 50) /
-                totalCount,
+              (stableCount * 100 + atRiskRestaurants.length * 50) / totalCount,
               1,
             )
           : 0;
@@ -132,7 +120,7 @@ export function createCase2KamsListViewModel(
       return {
         kam: {
           ...kam,
-          portfolioSize: baselineKam?.portfolioSize ?? totalCount,
+          portfolioSize: totalCount,
         },
         aggregate: output.dataset.aggregates.kams.find(
           (aggregate) => aggregate.key === kam.kamId,
@@ -152,7 +140,7 @@ export function createCase2KamsListViewModel(
           portfolioMix: {
             criticalCount: criticalRestaurants.length,
             atRiskCount: atRiskRestaurants.length,
-            stableCount: visibleStableCount,
+            stableCount,
             totalCount,
           },
         },
@@ -160,17 +148,11 @@ export function createCase2KamsListViewModel(
     }),
     ranking: output.kams
       .map((kam) => {
-        const baselineKam = baselineOutput.kams.find(
-          (candidate) => candidate.kamId === kam.kamId,
-        );
         const restaurants = output.restaurants.filter(
           (restaurant) => restaurant.kamId === kam.kamId,
         );
-        const baselineRestaurants = baselineOutput.restaurants.filter(
-          (restaurant) => restaurant.kamId === kam.kamId,
-        );
         const classifiedRestaurants = restaurants.map((restaurant) =>
-          getProjectedStatus(restaurant),
+          getDisplayStatus(restaurant),
         );
         const criticalCount = classifiedRestaurants.filter(
           (status) => status === "critical",
@@ -189,8 +171,7 @@ export function createCase2KamsListViewModel(
           kamName: kam.kamName,
           priorityScore: visiblePriorityScore,
           portfolioStatus: kam.portfolioStatus,
-          portfolioSize:
-            baselineKam?.portfolioSize ?? baselineRestaurants.length ?? kam.portfolioSize,
+          portfolioSize: restaurants.length || kam.portfolioSize,
           averageRestaurantPriority:
             kam.portfolioBreakdown.averageRestaurantPriority,
           lowConfidenceCount: kam.portfolioBreakdown.lowConfidenceCount,
