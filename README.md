@@ -41,7 +41,7 @@ evitar métricas, insights o claims que no puedan defenderse con el dataset o co
 
 Esta postura existe para evitar humo y mantener la credibilidad de la demo.
 
-Escenarios oficiales de la demo
+## Escenarios oficiales de la demo
 
 La app trabaja con 3 escenarios visibles:
 
@@ -57,7 +57,7 @@ Reinterpretación del mismo dataset usando la lógica propia del sistema para pr
 
 Versión agravada del escenario para mostrar sensibilidad del sistema, aparición de alertas y cambios visibles en la priorización.
 
-Pantallas principales
+## Pantallas principales
 
 Las pantallas base del proyecto son:
 
@@ -73,7 +73,7 @@ A nivel de implementación actual, el proyecto contiene rutas y módulos para da
 
 ## Stack técnico
 
-Base tecnológica del proyecto:
+### Base tecnológica del proyecto:
 
 Next.js
 TypeScript
@@ -82,7 +82,7 @@ Dataset embebido
 Deploy web
 Telegram opcional como canal adicional
 
-Dependencias observables en el repo actual:
+### Dependencias observables en el repo actual:
 
 Next.js 15.3.8
 React 19
@@ -129,7 +129,7 @@ Recursos estáticos como logo y avatares
 
 Además, el proyecto conserva una estrategia de trabajo por frentes con worktrees para módulos como ui-shell, data-engine, agent-logic y demo-flow.
 
-Cómo correrlo localmente
+## Cómo correrlo localmente
 Requisitos
 Node.js instalado
 npm disponible
@@ -154,7 +154,7 @@ npm run test:agent
 
 Scripts confirmados en package.json.
 
-Navegación sugerida para la demo
+## Navegación sugerida para la demo
 
 Un recorrido razonable para mostrar la solución es:
 
@@ -170,9 +170,8 @@ Vista por Restaurante
 Para explicar riesgo, benchmark y siguiente acción.
 Alertas
 Para mostrar cola accionable y priorización.
-Deck
-Para cerrar con narrativa ejecutiva dentro del mismo producto.
-Cómo usar los escenarios
+
+## Cómo usar los escenarios
 
 La demo permite alternar entre escenarios para comparar cómo cambia la lectura operativa del sistema:
 
@@ -182,18 +181,19 @@ usa Crisis operativa para evidenciar sensibilidad, alertas y cambios en la prior
 
 La app también incluye una acción de reinicio de demo para regresar a un estado limpio de presentación. Esto es coherente con uno de los principios congelados del proyecto: la demo debe ser reiniciable.
 
-Nota sobre fechas visibles en la app
+## Nota sobre fechas visibles en la app
 
 En algunas vistas puede aparecer una fecha como “Última actualización: diciembre 2027”. Esto no es un error de interfaz: responde a la temporalidad del dataset utilizado, que contiene registros ubicados en noviembre de 2027. Por esa razón, la demo conserva esa referencia temporal para no falsear el contexto de los datos.
 
-Qué sí hace la demo
+## Qué sí hace la demo
 procesa un dataset embebido del caso
 organiza señales de riesgo y prioridades
 permite comparar una lectura base contra una lectura del agente
 muestra pantallas enfocadas en operación, no solo en visualización
 soporta una demo navegable y reiniciable
 mantiene separadas la capa visual, la lógica del agente y la capa de datos a nivel de repo
-Qué no hace la demo
+
+## Qué no hace la demo
 no se conecta a sistemas productivos reales de Rappi
 no usa datos en tiempo real
 no automatiza intervenciones reales sobre restaurantes
@@ -208,7 +208,8 @@ la calidad del análisis depende del dataset embebido disponible
 algunos outputs son demostrativos y están acotados a la lógica definida para el caso
 Telegram es opcional, no el núcleo del sistema
 el valor principal está en la priorización operativa defendible, no en vender automatización inflada
-Mejoras futuras razonables
+
+## Mejoras futuras razonables
 
 Si este proyecto evolucionara más allá del challenge, las extensiones razonables serían:
 
@@ -219,7 +220,8 @@ feedback loop del KAM sobre recomendaciones
 trazabilidad más profunda de decisiones del agente
 notificaciones reales multicanal
 refinamiento del motor de scoring y explicación
-Estado del entregable
+
+## Estado del entregable
 
 El resultado esperado del proyecto era contar con:
 
@@ -233,7 +235,7 @@ un flujo de demo reiniciable
 
 La app publicada cumple con el objetivo central de presentar una web app funcional para el caso planteado, con estructura modular, escenarios visibles y una narrativa de inteligencia operativa defendible.
 
-Documentos base del proyecto
+## Documentos base del proyecto
 
 En docs/ se incluyen documentos que sirvieron como marco del proyecto:
 
@@ -242,10 +244,11 @@ CHAT_ARCHITECTURE.md
 DECISIONS_FROZEN_V1.md
 SCREEN_BLUEPRINT_SEED.md
 REPO_STRATEGY.md
-Deploy
+
+## Deploy
 
 La demo está desplegada en Vercel y accesible por navegador en https://rappi-kam-intel.vercel.app
 
-Licencia
+## Licencia
 
 Pendiente de definir.
