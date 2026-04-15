@@ -4,12 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  BuildingOffice2Icon,
   BuildingStorefrontIcon,
   BellAlertIcon,
   ChartBarSquareIcon,
   ClipboardDocumentCheckIcon,
-  MapPinIcon,
   PlayIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
@@ -18,11 +16,6 @@ import { cn } from "@/lib/utils/cn";
 import type { NavItem } from "@/types/domain";
 
 const restaurantsHref = "/restaurants/R0008";
-
-const executiveItems = [
-  { label: "Ciudades", icon: MapPinIcon, href: "/#ciudades-riesgo-operativo" },
-  { label: "Verticales", icon: BuildingOffice2Icon, href: "/#concentracion-verticales" },
-];
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -77,25 +70,6 @@ export function Sidebar() {
           );
         })}
       </nav>
-
-      <div className="mt-10">
-        <p className="px-4 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">
-          Vista ejecutiva
-        </p>
-        <div className="mt-3 space-y-1.5">
-          {executiveItems.map(({ label, icon: Icon, href }) => (
-            <Link
-              key={label}
-              href={href}
-              className="flex w-full items-center gap-3 rounded-[12px] px-4 py-3 text-sm font-medium text-slate-500 transition hover:bg-white hover:text-[#17181b]"
-            >
-              <Icon className="h-[18px] w-[18px]" />
-              {label}
-            </Link>
-          ))}
-        </div>
-      </div>
-
       <div className="mt-auto space-y-4">
         <div className="rounded-[16px] border border-[#e7e8ed] bg-white p-3">
           <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">

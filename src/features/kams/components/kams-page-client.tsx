@@ -26,6 +26,10 @@ function formatRevenueMillions(valueMxn: number) {
 }
 
 function formatRevenueCompact(valueMxn: number) {
+  if (valueMxn >= 1_000_000) {
+    return `$${(valueMxn / 1_000_000).toFixed(1)}M`;
+  }
+
   return `$${Math.round(valueMxn / 1000)}k`;
 }
 

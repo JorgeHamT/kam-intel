@@ -2,10 +2,16 @@ import type { Case2OutputBundle } from "../output.ts";
 import type { Case2KamsListViewModel } from "./types.ts";
 import { getProvisionalFlags } from "./helpers.ts";
 
-function getVisibleStatus(
+function getProjectedStatus(
+  restaurant: Case2OutputBundle["restaurants"][number],
+): "critical" | "at_risk" | "watchlist" | "stable" {
+  return restaurant.status;
+}
+
+function getDisplayStatus(
   restaurant: Case2OutputBundle["restaurants"][number],
 ): "critical" | "at_risk" | "stable" {
-  return restaurant.status === "watchlist" ? "at_risk" : restaurant.status;
+  return restaurant.status === "watchlist" ? "stable" : restaurant.status;
 }
 
 function roundTo(value: number, digits = 2) {
@@ -44,7 +50,9 @@ export function createCase2KamsListViewModel(
           (restaurant) => restaurant.kamId === kam.kamId,
         );
         return restaurants.some(
-          (restaurant) => getVisibleStatus(restaurant) !== "stable",
+          (restaurant) =>
+            getProjectedStatus(restaurant) === "critical" ||
+            getProjectedStatus(restaurant) === "at_risk",
         );
       }).length,
       criticalPortfolioCount: output.kams.filter((kam) => {
@@ -52,7 +60,7 @@ export function createCase2KamsListViewModel(
           (restaurant) => restaurant.kamId === kam.kamId,
         );
         return restaurants.some(
-          (restaurant) => getVisibleStatus(restaurant) === "critical",
+          (restaurant) => getProjectedStatus(restaurant) === "critical",
         );
       }).length,
       totalAlerts: output.alerts.length,
@@ -70,16 +78,17 @@ export function createCase2KamsListViewModel(
       const classifiedRestaurants = restaurants.map((restaurant) => {
         return {
           restaurant,
-          displayStatus: getVisibleStatus(restaurant),
+          projectedStatus: getProjectedStatus(restaurant),
+          displayStatus: getDisplayStatus(restaurant),
         };
       });
       const criticalRestaurants = classifiedRestaurants.filter(
-        (item) => item.displayStatus === "critical",
+        (item) => item.projectedStatus === "critical",
       );
       const atRiskRestaurants = classifiedRestaurants.filter(
-        (item) => item.displayStatus === "at_risk",
+        (item) => item.projectedStatus === "at_risk",
       );
-      const stableCount = classifiedRestaurants.filter(
+      const stableLikeCount = classifiedRestaurants.filter(
         (item) => item.displayStatus === "stable",
       ).length;
       const totalCount = Math.max(
@@ -88,7 +97,7 @@ export function createCase2KamsListViewModel(
       );
       const visibleStableCount = Math.max(
         totalCount - criticalRestaurants.length - atRiskRestaurants.length,
-        stableCount,
+        stableLikeCount,
       );
       const pressurePct =
         totalCount > 0
@@ -161,7 +170,7 @@ export function createCase2KamsListViewModel(
           (restaurant) => restaurant.kamId === kam.kamId,
         );
         const classifiedRestaurants = restaurants.map((restaurant) =>
-          getVisibleStatus(restaurant),
+          getProjectedStatus(restaurant),
         );
         const criticalCount = classifiedRestaurants.filter(
           (status) => status === "critical",

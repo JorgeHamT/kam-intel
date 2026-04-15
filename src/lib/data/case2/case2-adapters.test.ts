@@ -140,13 +140,13 @@ test("kams adapter uses the visible classification breakdown for Diego Vargas", 
   assert.ok(diego);
   assert.deepEqual(diego.metrics.portfolioMix, {
     criticalCount: 7,
-    atRiskCount: 9,
-    stableCount: 6,
+    atRiskCount: 3,
+    stableCount: 12,
     totalCount: 22,
   });
-  assert.equal(diego.metrics.pressurePct, 72.7);
-  assert.equal(diego.metrics.healthScore, 47.7);
-  assert.equal(diego.metrics.alertCount, 16);
+  assert.equal(diego.metrics.pressurePct, 45.5);
+  assert.equal(diego.metrics.healthScore, 61.4);
+  assert.equal(diego.metrics.alertCount, 10);
 });
 
 test("kam detail adapter resolves a real KAM detail view model", () => {

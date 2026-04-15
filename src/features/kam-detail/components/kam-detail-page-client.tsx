@@ -42,6 +42,10 @@ function firstSentence(value: string | null | undefined) {
 }
 
 function formatRevenueCompact(valueMxn: number) {
+  if (valueMxn >= 1_000_000) {
+    return `$${(valueMxn / 1_000_000).toFixed(1)}M`;
+  }
+
   return `$${Math.round(valueMxn / 1_000)}k`;
 }
 
