@@ -142,7 +142,7 @@ export function DashboardPageClient({ baseOutput }: DashboardPageClientProps) {
           tone="critical"
         />
         <KpiCard
-          label="GMV en riesgo"
+          label="Ingresos en riesgo"
           value={formatCompactCurrency(scenarioAtRiskRevenue)}
           detail="Exposición visible · últimos 7 días"
         />
@@ -166,32 +166,30 @@ export function DashboardPageClient({ baseOutput }: DashboardPageClientProps) {
               subtitle="Resumen ejecutivo por ciudad y riesgo"
             />
 
-          <div className="flex-1 px-5 pb-4">
-            <div className="h-full rounded-[18px] bg-[#f6f7fa] px-4 py-4 text-[#17181b]">
-              <div className="grid gap-4.5">
-                <RegionalMetric
-                  label="Ciudad con mayor presión"
-                  value={highestPressureCity?.city ?? "Sin dato"}
-                  tone="brand"
-                />
-                <RegionalMetric
-                  label="Ciudad más estable"
-                  value={mostStableCity?.city ?? "Sin dato"}
-                  tone="success"
-                />
-                <RegionalMetric
-                  label="Cuentas críticas detectadas"
-                  value={`${viewModel.summary.criticalCount}`}
-                  tone="amber"
-                />
-                <RegionalMetric
-                  label="Cobertura en presión"
-                  value={`${regionalRiskShare}%`}
-                  tone="brand"
-                />
-                </div>
-              </div>
+          <div className="flex-1 px-4 pb-4">
+            <div className="grid gap-4">
+              <RegionalMetric
+                label="Ciudad con mayor presión"
+                value={highestPressureCity?.city ?? "Sin dato"}
+                tone="brand"
+              />
+              <RegionalMetric
+                label="Ciudad más estable"
+                value={mostStableCity?.city ?? "Sin dato"}
+                tone="success"
+              />
+              <RegionalMetric
+                label="Cuentas críticas detectadas"
+                value={`${viewModel.summary.criticalCount}`}
+                tone="amber"
+              />
+              <RegionalMetric
+                label="Cobertura en presión"
+                value={`${regionalRiskShare}%`}
+                tone="brand"
+              />
             </div>
+          </div>
           </div>
         </PanelCard>
 
@@ -256,12 +254,6 @@ export function DashboardPageClient({ baseOutput }: DashboardPageClientProps) {
               </div>
 
               <div className="mt-3 flex justify-center">
-                <Link
-                  href="/#ciudades-riesgo-operativo"
-                  className="inline-flex items-center justify-center rounded-full border border-[#ececf1] px-4 py-2 text-sm font-semibold text-[#6d7481] transition hover:border-[#d9dde4] hover:text-[#17181b]"
-                >
-                  Ver {totalCities} ciudades
-                </Link>
               </div>
             </div>
           </div>
@@ -326,16 +318,16 @@ export function DashboardPageClient({ baseOutput }: DashboardPageClientProps) {
             subtitle="Carteras que requieren seguimiento prioritario"
           />
 
-          <div className="flex-1 px-5 pb-4">
-          <div className="space-y-4.5">
+          <div className="flex-1 px-4 pb-4">
+          <div className="space-y-3">
             {topKams.map((kam) => (
               <Link
                 key={kam.kamId}
                 href={`/kams/${kam.kamId}`}
-                className="flex items-center justify-between gap-3 rounded-[14px] border border-[#eef0f4] px-3 py-3"
+                className="flex items-center justify-between gap-3 rounded-[12px] border border-[#eef0f4] px-3 py-2"
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#e7e8ed] bg-white text-[10px] font-semibold text-[#17181b]">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e7e8ed] bg-white text-[11px] font-semibold text-[#17181b]">
                     {(kam.kamName ?? kam.kamId)
                       .split(" ")
                       .map((part) => part[0])
@@ -346,11 +338,11 @@ export function DashboardPageClient({ baseOutput }: DashboardPageClientProps) {
                     <p className="text-sm font-semibold leading-5 text-[#17181b]">
                       {kam.kamName ?? kam.kamId}
                     </p>
-                    <p className="text-[11px] text-[#9da3ad]">
+                    <p className="text-[11px] text-[#8f97a0]">
                       {kam.priorityScore >= 85
                         ? "Seguimiento inmediato"
                         : kam.priorityScore >= 70
-                          ? "Cartera con presión operativa"
+                          ? "Cartera con presión"
                           : "Requiere revisión"}
                     </p>
                   </div>
@@ -364,21 +356,22 @@ export function DashboardPageClient({ baseOutput }: DashboardPageClientProps) {
                         ? "Riesgo alto"
                         : "Atención activa"}
                   </p>
-                  <p className="text-[10px] uppercase tracking-[0.16em] text-[#9aa0ab]">
+                  <p className="text-[10px] uppercase tracking-[0.12em] text-[#9aa0ab]">
                     Portafolio
                   </p>
                 </div>
               </Link>
             ))}
           </div>
+          <div className="mt-4 flex justify-center">
+            <Link
+              href="/kams"
+              className="inline-flex h-10 items-center justify-center rounded-[12px] bg-brand px-4 text-sm font-semibold text-white"
+            >
+              Revisar KAMs
+            </Link>
           </div>
-
-          <button
-            type="button"
-            className="mx-5 mb-4 mt-6 flex h-12 items-center justify-center rounded-[16px] bg-brand px-4 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(242,77,79,0.28)]"
-          >
-            Revisar KAMs
-          </button>
+        </div>
         </PanelCard>
       </section>
 
