@@ -67,7 +67,6 @@ Detalle de KAM
 Vista por Restaurante
 Alertas
 Data Validation
-Deck interactivo
 
 A nivel de implementación actual, el proyecto contiene rutas y módulos para dashboard, KAMs, restaurantes, alertas, validación de datos y deck, además de features específicas para detalle de KAM y detalle de restaurante.
 
@@ -170,8 +169,7 @@ Vista por Restaurante
 Para explicar riesgo, benchmark y siguiente acción.
 Alertas
 Para mostrar cola accionable y priorización.
-Deck
-Para cerrar con narrativa ejecutiva dentro del mismo producto.
+
 Cómo usar los escenarios
 
 La demo permite alternar entre escenarios para comparar cómo cambia la lectura operativa del sistema:
@@ -182,7 +180,7 @@ usa Crisis operativa para evidenciar sensibilidad, alertas y cambios en la prior
 
 La app también incluye una acción de reinicio de demo para regresar a un estado limpio de presentación. Esto es coherente con uno de los principios congelados del proyecto: la demo debe ser reiniciable.
 
-Nota sobre fechas visibles en la app
+### Nota sobre fechas visibles en la app
 
 En algunas vistas puede aparecer una fecha como “Última actualización: diciembre 2027”. Esto no es un error de interfaz: responde a la temporalidad del dataset utilizado, que contiene registros ubicados en noviembre de 2027. Por esa razón, la demo conserva esa referencia temporal para no falsear el contexto de los datos.
 
@@ -233,7 +231,7 @@ un flujo de demo reiniciable
 
 La app publicada cumple con el objetivo central de presentar una web app funcional para el caso planteado, con estructura modular, escenarios visibles y una narrativa de inteligencia operativa defendible.
 
-Documentos base del proyecto
+### Documentos base del proyecto
 
 En docs/ se incluyen documentos que sirvieron como marco del proyecto:
 
@@ -246,6 +244,6 @@ Deploy
 
 La demo está desplegada en Vercel y accesible por navegador en https://rappi-kam-intel.vercel.app
 
-Licencia
+### Licencia
 
 Pendiente de definir.
