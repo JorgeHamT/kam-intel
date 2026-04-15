@@ -104,7 +104,7 @@ export function DashboardPageClient({ baseOutput }: DashboardPageClientProps) {
 
       <section className="flex items-start justify-between gap-6">
         <div>
-          <h1 className="text-[3.2rem] font-semibold leading-[0.95] tracking-[-0.07em] text-[#17181b]">
+          <h1 className="text-[2rem] md:text-[3.2rem] font-semibold leading-[0.95] tracking-[-0.07em] text-[#17181b]">
             Resumen de inteligencia
           </h1>
           <p className="mt-2 text-[15px] text-[#707784]">
@@ -125,10 +125,7 @@ export function DashboardPageClient({ baseOutput }: DashboardPageClientProps) {
         </div>
       </section>
 
-      <section
-        className="grid gap-5"
-        style={{ gridTemplateColumns: "repeat(4, minmax(0, 1fr))" }}
-      >
+      <section className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           label="Cuentas en seguimiento"
           value={scenarioRestaurantCount.toLocaleString()}
@@ -154,10 +151,7 @@ export function DashboardPageClient({ baseOutput }: DashboardPageClientProps) {
         />
       </section>
 
-      <section
-        className="grid items-stretch gap-5"
-        style={{ gridTemplateColumns: "1.08fr 1fr 1fr 0.8fr" }}
-      >
+      <section className="grid items-stretch gap-5 grid-cols-1 md:[grid-template-columns:1.08fr_1fr_1fr_0.8fr]">
         <PanelCard className="flex min-h-[220px] p-0">
           <div className="flex w-full flex-col">
             <DashboardSectionHeader
@@ -204,8 +198,7 @@ export function DashboardPageClient({ baseOutput }: DashboardPageClientProps) {
 
             <div className="flex-1 px-5 pb-3">
               <div
-                className="grid items-center border-b border-[#ececf1] pb-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a1a6b0]"
-                style={{ gridTemplateColumns: "minmax(0,1.35fr) 88px 92px" }}
+                className="hidden sm:grid items-center border-b border-[#ececf1] pb-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a1a6b0] sm:[grid-template-columns:minmax(0,1.35fr)_88px_92px]"
               >
                 <span className="text-left">Ciudad</span>
                 <span className="text-center">Riesgo</span>
@@ -231,8 +224,7 @@ export function DashboardPageClient({ baseOutput }: DashboardPageClientProps) {
                 return (
                   <div
                     key={city.city}
-                    className="grid items-center rounded-[12px] px-1 py-1.5 text-sm"
-                    style={{ gridTemplateColumns: "minmax(0,1.35fr) 88px 92px" }}
+                    className="grid items-center rounded-[12px] px-1 py-1.5 text-sm grid-cols-1 sm:[grid-template-columns:minmax(0,1.35fr)_88px_92px]"
                   >
                     <span className="truncate pr-3 font-semibold text-[#17181b]">
                       {city.city}
@@ -374,10 +366,7 @@ export function DashboardPageClient({ baseOutput }: DashboardPageClientProps) {
         </PanelCard>
       </section>
 
-      <section
-        className="grid items-stretch gap-5"
-        style={{ gridTemplateColumns: "1.02fr 0.95fr 0.78fr" }}
-      >
+      <section className="grid items-stretch gap-5 grid-cols-1 md:[grid-template-columns:1.02fr_0.95fr_0.78fr]">
         <PanelCard tone="dark" className="min-h-[250px]">
           <div className="flex items-center gap-2">
             <span className="text-brand">◉</span>
