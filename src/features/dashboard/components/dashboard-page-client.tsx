@@ -198,7 +198,7 @@ export function DashboardPageClient({ baseOutput }: DashboardPageClientProps) {
 
             <div className="flex-1 px-5 pb-3">
               <div
-                className="hidden sm:grid items-center border-b border-[#ececf1] pb-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a1a6b0] sm:[grid-template-columns:minmax(0,1.35fr)_88px_92px]"
+                className="hidden sm:grid items-center border-b border-[#ececf1] pb-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#a1a6b0] gap-x-3 sm:[grid-template-columns:minmax(0,1fr)_80px_64px]"
               >
                 <span className="text-left">Ciudad</span>
                 <span className="text-center">Riesgo</span>
@@ -224,7 +224,7 @@ export function DashboardPageClient({ baseOutput }: DashboardPageClientProps) {
                 return (
                   <div
                     key={city.city}
-                    className="grid items-center rounded-[12px] py-1.5 text-sm grid grid-cols-1 sm:grid sm:[grid-template-columns:minmax(0,1.35fr)_88px_92px]"
+                    className="grid items-center rounded-[12px] py-1.5 text-sm grid-cols-1 sm:grid sm:gap-x-3 sm:[grid-template-columns:minmax(0,1fr)_80px_64px]"
                   >
                     <span className="truncate pr-3 font-semibold text-[#17181b]">
                       {city.city}
