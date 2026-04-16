@@ -224,7 +224,7 @@ export function DashboardPageClient({ baseOutput }: DashboardPageClientProps) {
                 return (
                   <div
                     key={city.city}
-                    className="grid items-center rounded-[12px] px-1 py-1.5 text-sm grid-cols-1 sm:[grid-template-columns:minmax(0,1.35fr)_88px_92px]"
+                    className="grid items-center rounded-[12px] py-1.5 text-sm grid grid-cols-1 sm:grid sm:[grid-template-columns:minmax(0,1.35fr)_88px_92px]"
                   >
                     <span className="truncate pr-3 font-semibold text-[#17181b]">
                       {city.city}
